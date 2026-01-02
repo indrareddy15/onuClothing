@@ -1,0 +1,399 @@
+/* E-Commerce Design System - Frontend Application */
+
+/* CSS Custom Properties */
+:root {
+  /* Color Standards */
+  --primary-white: #ffffff;
+  --primary-black: #000000;
+  --secondary-grey: #666666;
+  --section-grey-1: #f5f5f5;
+  --section-grey-2: #f9f9f9;
+  --border-light: #e0e0e0;
+  --hover-dark: #333333;
+
+  /* Typography */
+  --font-primary: 'kumbsan', sans-serif;
+  --font-weight-bold: 700;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+}
+
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--primary-white);
+  color: var(--primary-black);
+  line-height: 1.6;
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes underlineExpand {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Animation Classes */
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.6s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.8s ease-out forwards;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-400 {
+  animation-delay: 0.4s;
+}
+
+.animate-delay-600 {
+  animation-delay: 0.6s;
+}
+
+.animate-delay-800 {
+  animation-delay: 0.8s;
+}
+
+.animate-delay-1000 {
+  animation-delay: 1.0s;
+}
+
+.animate-delay-1200 {
+  animation-delay: 1.2s;
+}
+
+.opacity-0 {
+  opacity: 0;
+}
+
+/* Hover Effects */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-glow {
+  transition: all 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Navigation Link Styles */
+.nav-link {
+  position: relative;
+  transition: color 0.3s ease;
+  text-decoration: none;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -4px;
+  left: 0;
+  background-color: var(--primary-black);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Color Utility Classes */
+.bg-primary-white {
+  background-color: var(--primary-white);
+}
+
+.bg-primary-black {
+  background-color: var(--primary-black);
+}
+
+.bg-section-grey-1 {
+  background-color: var(--section-grey-1);
+}
+
+.bg-section-grey-2 {
+  background-color: var(--section-grey-2);
+}
+
+.text-primary-black {
+  color: var(--primary-black);
+}
+
+.text-secondary-grey {
+  color: var(--secondary-grey);
+}
+
+.text-primary-white {
+  color: var(--primary-white);
+}
+
+.border-light {
+  border-color: var(--border-light);
+}
+
+/* Button Styles */
+.btn-primary {
+  background-color: var(--primary-black);
+  color: var(--primary-white);
+  border: 2px solid var(--primary-black);
+  padding: 12px 24px;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-primary:hover {
+  background-color: var(--hover-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--primary-black);
+  border: 2px solid var(--primary-black);
+  padding: 12px 24px;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-secondary:hover {
+  background-color: var(--primary-black);
+  color: var(--primary-white);
+}
+
+/* Card Styles */
+.card {
+  background-color: var(--primary-white);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+  border-color: var(--primary-black);
+}
+
+/* Product Card Styles */
+.product-card {
+  background-color: var(--primary-white);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-black);
+}
+
+.product-image {
+  transition: transform 0.3s ease;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+/* Section Styles */
+.hero-section {
+  background-color: var(--section-grey-1);
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.feature-section {
+  background-color: var(--section-grey-2);
+  padding: 60px 20px;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: var(--primary-black);
+  color: var(--primary-white);
+  padding: 60px 20px 20px;
+}
+
+.footer-link {
+  color: var(--primary-white);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #cccccc;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 60px 15px;
+  }
+
+  .feature-section {
+    padding: 40px 15px;
+  }
+
+  .footer {
+    padding: 40px 15px 15px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 40px 10px;
+  }
+
+  .feature-section {
+    padding: 30px 10px;
+  }
+
+  .footer {
+    padding: 30px 10px 10px;
+  }
+}
+
+/* Loading States */
+.loading-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Focus States */
+.focus-ring {
+  outline: none;
+  transition: box-shadow 0.3s ease;
+}
+
+.focus-ring:focus {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Typography Scale */
+.text-xs { font-size: 12px; }
+.text-sm { font-size: 14px; }
+.text-base { font-size: 16px; }
+.text-lg { font-size: 18px; }
+.text-xl { font-size: 20px; }
+.text-2xl { font-size: 24px; }
+.text-3xl { font-size: 30px; }
+.text-4xl { font-size: 36px; }
+
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* Spacing Scale */
+.p-1 { padding: 4px; }
+.p-2 { padding: 8px; }
+.p-3 { padding: 12px; }
+.p-4 { padding: 16px; }
+.p-5 { padding: 20px; }
+.p-6 { padding: 24px; }
+.p-8 { padding: 32px; }
+
+.m-1 { margin: 4px; }
+.m-2 { margin: 8px; }
+.m-3 { margin: 12px; }
+.m-4 { margin: 16px; }
+.m-5 { margin: 20px; }
+.m-6 { margin: 24px; }
+.m-8 { margin: 32px; }

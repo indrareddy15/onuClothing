@@ -1,0 +1,221 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
+@import url("https://unpkg.com/leaflet@1.7.1/dist/leaflet.css");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 240 10% 3.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 3.9%;
+        --primary: 346 77% 49.8%;
+        --primary-foreground: 355.7 100% 97.3%;
+        --secondary: 240 4.8% 95.9%;
+        --secondary-foreground: 240 5.9% 10%;
+        --muted: 240 4.8% 95.9%;
+        --muted-foreground: 240 3.8% 45.9%;
+        --accent: 240 4.8% 95.9%;
+        --accent-foreground: 240 5.9% 10%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 5.9% 90%;
+        --input: 240 5.9% 90%;
+        --ring: 346 77% 49.8%;
+        --chart-1: 12 76% 61%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 197 37% 24%;
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+        --radius: 0.5rem;
+    }
+
+    .dark {
+        --background: 240 10% 3.9%;
+        --foreground: 0 0% 98%;
+        --card: 240 10% 3.9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 3.9%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 346 77% 49.8%;
+        --primary-foreground: 355.7 100% 97.3%;
+        --secondary: 240 3.7% 15.9%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 240 3.7% 15.9%;
+        --muted-foreground: 240 5% 64.9%;
+        --accent: 240 3.7% 15.9%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --ring: 346 77% 49.8%;
+        --chart-1: 220 70% 50%;
+        --chart-2: 160 60% 45%;
+        --chart-3: 30 80% 55%;
+        --chart-4: 280 65% 60%;
+        --chart-5: 340 75% 55%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground font-sans;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+}
+
+@layer components {
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+        monospace;
+}
+
+@font-face {
+    font-family: "Whitney";
+    font-style: normal;
+    font-weight: 500;
+    src: local("Whitney"),
+        url("https://fonts.cdnfonts.com/s/38487/whitneymedium.woff") format("woff");
+}
+
+#__react-alert__>div>div>div {
+    background-color: #373939 !important;
+    font-family: "Whitney" !important;
+    font-size: 10px !important;
+    width: max-content !important;
+}
+
+@layer utilities {
+    @keyframes shine {
+        0% {
+            background-position: -200%;
+        }
+
+        100% {
+            background-position: 200%;
+        }
+    }
+
+    .animate-shine {
+        background: linear-gradient(90deg,
+                rgba(216, 184, 184, 0) 0%,
+                rgba(197, 89, 89, 0.3) 50%,
+                rgba(237, 130, 130, 0) 100%);
+        background-size: 200%;
+        animation: shine 1.5s infinite;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 40px, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .animate-fadeInUp {
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    @keyframes marquee {
+        from {
+            transform: translateX(0);
+        }
+
+        to {
+            transform: translateX(calc(-100% - var(--gap)));
+        }
+    }
+
+    @keyframes marquee-vertical {
+        from {
+            transform: translateY(0);
+        }
+
+        to {
+            transform: translateY(calc(-100% - var(--gap)));
+        }
+    }
+
+    .animate-marquee {
+        animation: marquee var(--duration) linear infinite;
+    }
+
+    .animate-marquee-vertical {
+        animation: marquee-vertical var(--duration) linear infinite;
+    }
+}
+
+/* Style for error message container */
+.error-message-container {
+    position: absolute;
+    top: 20%;
+    left: 0;
+    right: 0;
+    background-color: rgba(255, 0, 0, 0.1);
+    /* Light red background */
+    color: #721c24;
+    /* Dark red text */
+    border: 1px solid #f5c6cb;
+    /* Border color for emphasis */
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Optional: Style for error description under the title */
+.error-description {
+    font-size: 14px;
+    color: #721c24;
+    margin-top: 10px;
+    font-weight: normal;
+}
+
+/* Style for unsupported file type message */
+.text-red-600 {
+    color: #e53e3e;
+    /* More vivid red */
+}
+
+/* Small fix for responsive text scaling */
+@media (max-width: 640px) {
+    .error-message-container {
+        font-size: 16px;
+        padding: 15px;
+    }
+
+    .error-description {
+        font-size: 12px;
+    }
+}
