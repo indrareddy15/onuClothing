@@ -13,99 +13,117 @@ const ColorPresetSelector = ({ colorOptions, sizeTag, sizeTitle, OnChange, editi
 	const [isLoading, setIsLoading] = useState(false);
 	const [optionsArray, setOptionsArray] = useState([]);
 	const [selectedColorArray, setSelectedColorArray] = useState([]);
+	const [showMore, setShowMore] = useState([]);
 
+	// Update when initialColors changes (e.g., when switching between sizes)
 	useEffect(() => {
 		if (initialColors && initialColors.length > 0) {
 			setSelectedColorArray(initialColors);
 			setOptionsArray(initialColors);
 			setShowMore(initialColors.map((_, i) => ({ id: i, value: false })));
+		} else {
+			// Reset if no initial colors
+			setSelectedColorArray([]);
+			setOptionsArray([]);
+			setShowMore([]);
 		}
-	}, [initialColors]);
+	}, [sizeTag]); // Use sizeTag as dependency to detect when size changes
 
 	// const [viewMoreState, setViewMoreState] = useState({}); // State to track view more per color ID
 	const handelSetImagesByColor = (allImages, color) => {
 		if (isLoading) return;
-		setSelectedColorArray(selectedColorArray.map((s) => s.id === color.id ? { ...s, images: allImages } : s));
-		if (OnChange) {
-			OnChange(selectedColorArray);
-			// console.log("Color Images Image Urls:  ",selectedColorArray);
-		}
-
+		setSelectedColorArray((prev) => {
+			const updated = prev.map((s) => s.id === color.id ? { ...s, images: allImages } : s);
+			if (OnChange) {
+				OnChange(updated);
+			}
+			return updated;
+		});
 	}
 	const handleIncrement = (e, color, action) => {
 		if (isLoading) return;
 		e.preventDefault();
 		const alreadyPresent = selectedColorArray.find((s) => s.id === color.id)
+
+		let updated;
 		if (action === "increment") {
 			// If the size is not already in the array, add it
 			if (alreadyPresent === undefined) {
-				setSelectedColorArray((prev) => [...prev, color]);
-			}
-			// Otherwise, increment the quantity of the existing size
-			setSelectedColorArray((prev) =>
-				prev.map((s) =>
+				updated = [...selectedColorArray, color];
+			} else {
+				// Otherwise, increment the quantity of the existing size
+				updated = selectedColorArray.map((s) =>
 					s.id === color.id ? { ...s, quantity: s.quantity + 1 } : s
-				)
-			);
-
+				);
+			}
 		} else {
 			// If the size is already in the array and its quantity is more than 1, decrement the quantity
-			setSelectedColorArray((prev) =>
-				prev.map((s) =>
+			updated = selectedColorArray
+				.map((s) =>
 					s.id === color.id
 						? { ...s, quantity: s.quantity - 1 }
 						: s
-				).filter((s) => s.quantity >= 0) // Remove items with zero quantity
-			);
+				)
+				.filter((s) => s.quantity >= 0); // Remove items with zero quantity
 		}
-		// console.log("Selected Size Array: ",selectedSizeArray);
+
+		setSelectedColorArray(updated);
 		if (OnChange) {
-			OnChange(selectedColorArray);
-			// console.log("Color Images Image Urls:  ",selectedColorArray);
+			OnChange(updated);
 		}
 	};
 	const handleChangeSKU = (e, color) => {
 		if (isLoading) return;
 		const value = e.target.value;
-		setSelectedColorArray((prev) =>
-			prev.map((c) =>
+		setSelectedColorArray((prev) => {
+			const updated = prev.map((c) =>
 				c.id === color.id ? { ...c, sku: value } : c
-			)
-		);
-		if (OnChange) {
-			OnChange(selectedColorArray);
-			// console.log("Color Images Image Urls:  ",selectedColorArray);
-		}
+			);
+			if (OnChange) {
+				OnChange(updated);
+			}
+			return updated;
+		});
 	}
 
 	const handleChangeQuantity = (e, color) => {
 		if (isLoading) return;
 		const value = parseInt(e.target.value, 10);
 		if (!isNaN(value) && value >= 0) {
-			setSelectedColorArray((prev) =>
-				prev.map((c) =>
+			setSelectedColorArray((prev) => {
+				const updated = prev.map((c) =>
 					c.id === color.id ? { ...c, quantity: value } : c
-				)
-			);
+				);
+				// Call OnChange immediately with updated array
+				if (OnChange) {
+					OnChange(updated);
+				}
+				return updated;
+			});
 		} else {
-			setSelectedColorArray((prev) =>
-				prev.map((c) =>
+			setSelectedColorArray((prev) => {
+				const updated = prev.map((c) =>
 					c.id === color.id ? { ...c, quantity: 0 } : c
-				)
-			);
-		}
-		if (OnChange) {
-			OnChange(selectedColorArray);
-			// console.log("Color Images Image Urls:  ",selectedColorArray);
+				);
+				// Call OnChange immediately with updated array
+				if (OnChange) {
+					OnChange(updated);
+				}
+				return updated;
+			});
 		}
 	};
 	const changeColorLabel = (id, selectedColor) => {
 		// console.log("Color Label: ",label,id);
 
-		setOptionsArray(optionsArray.map((s) => s.id === id ? { ...s, label: selectedColor.label, name: selectedColor.name, images: selectedColor.images } : s));
-		setSelectedColorArray(selectedColorArray.map((s) => s.id === id ? { ...s, label: selectedColor.label, name: selectedColor.name, images: selectedColor.images } : s));
+		const updatedOptions = optionsArray.map((s) => s.id === id ? { ...s, label: selectedColor.label, name: selectedColor.name, images: selectedColor.images } : s);
+		const updatedSelected = selectedColorArray.map((s) => s.id === id ? { ...s, label: selectedColor.label, name: selectedColor.name, images: selectedColor.images } : s);
+
+		setOptionsArray(updatedOptions);
+		setSelectedColorArray(updatedSelected);
+
 		if (OnChange) {
-			OnChange(selectedColorArray);
+			OnChange(updatedSelected);
 		}
 	}
 	useEffect(() => {
@@ -117,21 +135,14 @@ const ColorPresetSelector = ({ colorOptions, sizeTag, sizeTitle, OnChange, editi
 				for (const item of selectedColorArray) {
 					const isInOptions = optionsArray.find((s) => s.id === item.id);
 					if (!isInOptions) {
-						setSelectedColorArray(selectedColorArray.filter((s) => s.id !== item.id));
-						// setViewMoreState([...viewMoreState,{id:item.id,viewMore:false}]);
-						// setViewMoreState()
+						setSelectedColorArray((prev) => prev.filter((s) => s.id !== item.id));
 					}
 				}
 			}
 		}
-		OnChange(selectedColorArray);
-		// console.log("Color Images Image Urls:  ",selectedColorArray);
-
-	}, [selectedColorArray, setSelectedColorArray, optionsArray]);
+	}, [selectedColorArray, optionsArray]);
 
 	// Toggle function to toggle the view more state for specific color
-	const [showMore, setShowMore] = useState([]);
-
 	const toggleShowMore = (e, index) => {
 		e.preventDefault();
 		setShowMore((prev) =>

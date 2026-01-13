@@ -27,35 +27,39 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 		if (initialSizes && initialSizes.length > 0) {
 			setSelectedSizeArray(initialSizes);
 			setOptionsArray(initialSizes);
-			setShowMore(initialSizes.map((_, i) => ({ id: i, value: false })));
+			// Show more logic - Preserve existing state
+			setShowMore(prev => {
+				return initialSizes.map((_, i) => {
+					if (prev[i]) return prev[i];
+					return { id: i, value: false };
+				});
+			});
 		}
 	}, [initialSizes]);
 
 	// Handle Increment and Decrement of Quantity
 	const handleIncrement = (size, action) => {
+		let newArray;
 		const alreadyPresent = selectedSizeArray.find((s) => s.id === size.id);
 		if (action === "increment") {
 			if (alreadyPresent === undefined) {
-				setSelectedSizeArray((prev) => [...prev, { ...size, quantity: 1 }]);
+				newArray = [...selectedSizeArray, { ...size, quantity: 1 }];
 			} else {
-				setSelectedSizeArray((prev) =>
-					prev.map((s) =>
-						s.id === size.id ? { ...s, quantity: s.quantity + 1 } : s
-					)
+				newArray = selectedSizeArray.map((s) =>
+					s.id === size.id ? { ...s, quantity: s.quantity + 1 } : s
 				);
 			}
 		} else {
-			setSelectedSizeArray((prev) =>
-				prev
-					.map((s) =>
-						s.id === size.id ? { ...s, quantity: s.quantity - 1 } : s
-					)
-					.filter((s) => s.quantity > 0) // Remove sizes with zero quantity
-			);
+			newArray = selectedSizeArray
+				.map((s) =>
+					s.id === size.id ? { ...s, quantity: s.quantity - 1 } : s
+				)
+				.filter((s) => s.quantity > 0); // Remove sizes with zero quantity
 		}
 
+		setSelectedSizeArray(newArray);
 		if (OnChange) {
-			OnChange(selectedSizeArray);
+			OnChange(newArray);
 		}
 	};
 
@@ -63,21 +67,19 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 	const handleChangeQuantity = (e, size) => {
 		e.preventDefault();
 		const value = parseInt(e.target.value, 10);
-		if (!isNaN(value) && value >= 0) {
-			setSelectedSizeArray((prev) =>
-				prev.map((s) =>
-					s.id === size.id ? { ...s, quantity: value } : s
-				)
-			);
+		const quantity = (!isNaN(value) && value >= 0) ? value : 0;
+
+		let newArray;
+		const exists = selectedSizeArray.find(s => s.id === size.id);
+		if (exists) {
+			newArray = selectedSizeArray.map((s) => s.id === size.id ? { ...s, quantity } : s);
 		} else {
-			setSelectedSizeArray((prev) =>
-				prev.map((s) =>
-					s.id === size.id ? { ...s, quantity: 0 } : s
-				)
-			);
+			newArray = [...selectedSizeArray, { ...size, quantity }];
 		}
+
+		setSelectedSizeArray(newArray);
 		if (OnChange) {
-			OnChange(selectedSizeArray);
+			OnChange(newArray);
 		}
 	};
 
@@ -86,47 +88,28 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 			checkAndCreateToast("error", `Please select a Valid Size, Which Is Not = ${label}`)
 			return;
 		}
-		setOptionsArray((prev) =>
-			prev.map((s) => (s.id === id ? { ...s, label: label } : s))
-		);
-		setSelectedSizeArray((prev) =>
-			prev.map((s) => (s.id === id ? { ...s, label: label } : s))
-		);
+		const updatedOptions = optionsArray.map((s) => (s.id === id ? { ...s, label: label } : s));
+		const updatedSelected = selectedSizeArray.map((s) => (s.id === id ? { ...s, label: label } : s));
+
+		setOptionsArray(updatedOptions);
+		setSelectedSizeArray(updatedSelected);
+
+		if (OnChange) {
+			OnChange(updatedSelected);
+		}
 	};
 
 	const handelSetImagesByColor = (size, colorsArray) => {
-		setSelectedSizeArray((prev) =>
-			prev.map((s) =>
+		setSelectedSizeArray((prev) => {
+			const updated = prev.map((s) =>
 				s.id === size.id ? { ...s, colors: colorsArray } : s
-			)
-		);
-	};
-
-	// Effect to sync selected sizes with options
-	useEffect(() => {
-		if (selectedSizeArray.length > 0) {
-			if (optionsArray.length === 0) {
-				// If optionsArray is cleared but selectedSizeArray has items (e.g. from initial load), 
-				// we might want to keep them or sync. 
-				// But here logic seems to be: optionsArray is the source of truth for "added" sizes rows.
-				// If initialSizes sets both, we are good.
-			} else {
-				for (const item of selectedSizeArray) {
-					const isInOptions = optionsArray.find((s) => s.id === item.id);
-					if (!isInOptions) {
-						setSelectedSizeArray((prev) =>
-							prev.filter((s) => s.id !== item.id)
-						);
-					}
-				}
+			);
+			if (OnChange) {
+				OnChange(updated);
 			}
-		}
-		if (OnChange) {
-			// OnChange(selectedSizeArray); // Avoid infinite loop if OnChange triggers parent re-render passing new initialSizes
-			// Only call OnChange if user interaction happens, or rely on parent to handle initial state.
-			// But here we are just syncing internal state.
-		}
-	}, [selectedSizeArray, setSelectedSizeArray, optionsArray]);
+			return updated;
+		});
+	};
 
 	const fetchSizeOptions = async () => {
 		try {
@@ -168,11 +151,20 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 
 	const handleAddSize = (e) => {
 		e.preventDefault();
-		setShowMore((prev) => [...prev, { id: optionsArray.length, value: false }]);
-		setOptionsArray([
-			...optionsArray,
-			{ id: optionsArray.length + 1, label: `New Size`, quantity: 1 },
-		]);
+		setShowMore((prev) => [...prev, { id: selectedSizeArray.length, value: false }]);
+		const newSize = {
+			id: selectedSizeArray.length + 1,
+			label: `New Size`,
+			quantity: 1,
+			colors: [] // Initialize colors array
+		};
+		// Update both arrays to keep them in sync
+		const updatedSizes = [...selectedSizeArray, newSize];
+		setSelectedSizeArray(updatedSizes);
+		setOptionsArray(updatedSizes);
+		if (OnChange) {
+			OnChange(updatedSizes);
+		}
 	};
 	// console.log("Availbale Options Array: ", availableColors);
 	// console.log("All Options Array: ", colorOptions);
@@ -213,7 +205,7 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 				</CardHeader>
 
 				<CardContent className="pt-6 space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar">
-					{optionsArray.length === 0 && (
+					{selectedSizeArray.length === 0 && (
 						<div className="text-center py-12 border-2 border-dashed rounded-xl bg-muted/20">
 							<div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
 								<PencilRuler className="w-6 h-6 text-muted-foreground" />
@@ -228,7 +220,7 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 					)}
 
 					<div className="space-y-4">
-						{optionsArray.map((size, i) => (
+						{selectedSizeArray.map((size, i) => (
 							<Fragment key={size.id}>
 								<div className={`rounded-xl border transition-all duration-300 ${showMore[i]?.value ? "bg-card shadow-md border-primary/20 ring-1 ring-primary/10" : "bg-card hover:bg-muted/20"}`}>
 									<div className="flex items-center justify-between p-4">
@@ -259,7 +251,13 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 											size="sm"
 											onClick={(e) => {
 												e.preventDefault();
-												setOptionsArray(optionsArray.filter((s) => s.id !== size.id));
+												// Remove from both selectedSizeArray and optionsArray
+												const updatedSizes = selectedSizeArray.filter((s) => s.id !== size.id);
+												setSelectedSizeArray(updatedSizes);
+												setOptionsArray(updatedSizes);
+												if (OnChange) {
+													OnChange(updatedSizes);
+												}
 											}}
 											className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
 										>
@@ -338,7 +336,7 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 														sizeTag={size.id}
 														OnChange={(e) => handelSetImagesByColor(size, e)}
 														editingMode={true}
-														initialColors={size.colors}
+														initialColors={size.colors || []}
 													/>
 												</div>
 
@@ -356,7 +354,7 @@ const SizeSelector = ({ sizeType, OnChange, initialSizes = [] }) => {
 						))}
 					</div>
 
-					{optionsArray.length > 0 && (
+					{selectedSizeArray.length > 0 && (
 						<div className="pt-4 flex justify-center">
 							<Button
 								className="w-full sm:w-auto min-w-[200px] btn-primary shadow-lg hover:shadow-xl transition-all"

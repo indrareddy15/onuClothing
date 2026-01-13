@@ -130,12 +130,56 @@ export default function AdminProductForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic Validation
-    if (!formData.title || !formData.price || !formData.category) {
+    // Enhanced Validation - check all required fields
+    const validationErrors = [];
+    if (!formData.productId) validationErrors.push("Product ID");
+    if (!formData.title) validationErrors.push("Title");
+    if (!formData.shortTitle) validationErrors.push("Short Title");
+    if (!formData.description) validationErrors.push("Description");
+    if (!formData.price) validationErrors.push("Price");
+    if (!formData.material) validationErrors.push("Material");
+    if (!formData.gender) validationErrors.push("Gender");
+    if (!formData.category) validationErrors.push("Category");
+    if (!formData.subCategory) validationErrors.push("Sub-Category");
+
+    // Size & Color Validation
+    if (!formData.size || formData.size.length === 0) {
+      validationErrors.push("Sizes (at least one size is required)");
+    } else {
+      formData.size.forEach((size, index) => {
+        if (!size.colors || size.colors.length === 0) {
+          validationErrors.push(`Size ${size.label || index + 1} must have at least one color variant`);
+        } else {
+          size.colors.forEach((color, cIndex) => {
+            if (!color.images || color.images.length === 0) {
+              validationErrors.push(`Size ${size.label} - Color ${color.name || color.label} is missing images`);
+            }
+            if (!color.sku) {
+              validationErrors.push(`Size ${size.label} - Color ${color.name || color.label} is missing SKU`);
+            }
+          });
+        }
+      });
+    }
+
+    if (!formData.bulletPoints || formData.bulletPoints.length === 0) validationErrors.push("Bullet Points");
+    if (!formData.width) validationErrors.push("Width");
+    if (!formData.height) validationErrors.push("Height");
+    if (!formData.length) validationErrors.push("Length");
+    if (!formData.weight) validationErrors.push("Weight");
+    if (!formData.breadth) validationErrors.push("Breadth");
+
+    if (validationErrors.length > 0) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Please fill in all required fields"
+        title: "Validation Error",
+        description: (
+          <ul className="list-disc pl-4 mt-2 max-h-[200px] overflow-y-auto">
+            {validationErrors.map((err, i) => (
+              <li key={i}>{err}</li>
+            ))}
+          </ul>
+        )
       });
       return;
     }
@@ -288,13 +332,14 @@ export default function AdminProductForm({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="material">Material</Label>
+                    <Label htmlFor="material">Material *</Label>
                     <Textarea
                       id="material"
                       name="material"
                       value={formData.material}
                       onChange={handleChange}
                       placeholder="Material details"
+                      required
                       disabled={isViewMode}
                     />
                   </div>
@@ -511,7 +556,7 @@ export default function AdminProductForm({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="width">Width</Label>
+                    <Label htmlFor="width">Width *</Label>
                     <Input
                       type="number"
                       id="width"
@@ -519,11 +564,12 @@ export default function AdminProductForm({
                       value={formData.width}
                       onChange={handleChange}
                       placeholder="Width"
+                      required
                       disabled={isViewMode}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="height">Height</Label>
+                    <Label htmlFor="height">Height *</Label>
                     <Input
                       type="number"
                       id="height"
@@ -531,11 +577,12 @@ export default function AdminProductForm({
                       value={formData.height}
                       onChange={handleChange}
                       placeholder="Height"
+                      required
                       disabled={isViewMode}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="length">Length</Label>
+                    <Label htmlFor="length">Length *</Label>
                     <Input
                       type="number"
                       id="length"
@@ -543,11 +590,12 @@ export default function AdminProductForm({
                       value={formData.length}
                       onChange={handleChange}
                       placeholder="Length"
+                      required
                       disabled={isViewMode}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="weight">Weight</Label>
+                    <Label htmlFor="weight">Weight *</Label>
                     <Input
                       type="number"
                       id="weight"
@@ -555,11 +603,12 @@ export default function AdminProductForm({
                       value={formData.weight}
                       onChange={handleChange}
                       placeholder="Weight"
+                      required
                       disabled={isViewMode}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="breadth">Breadth</Label>
+                    <Label htmlFor="breadth">Breadth *</Label>
                     <Input
                       type="number"
                       id="breadth"
@@ -567,6 +616,7 @@ export default function AdminProductForm({
                       value={formData.breadth}
                       onChange={handleChange}
                       placeholder="Breadth"
+                      required
                       disabled={isViewMode}
                     />
                   </div>
