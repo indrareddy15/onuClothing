@@ -5,12 +5,12 @@ import ProductModel from "../../model/productmodel.js";
 import { handleImageUpload, handleMultipleImageUpload } from "../../utility/cloudinaryUtils.js";
 import { sendOrderStatusUpdateMail, sendUpdateOrderStatus } from "../emailController.js";
 import { calculateDiscountPercentage, calculateGst, getStatusDescription, getStringFromObject } from "../../utility/basicUtils.js";
-import { getShipmentOrderByOrderId,getAllReturnOrdersShiprockets} from "../LogisticsControllers/shiprocketLogisticController.js";
+import { getShipmentOrderByOrderId, getAllReturnOrdersShiprockets } from "../LogisticsControllers/shiprocketLogisticController.js";
 import Bag from "../../model/bag.js";
 import WhishList from "../../model/wishlist.js";
 import WebSiteModel from "../../model/websiteData.model.js";
 
-export const uploadImage = async (req, res) =>{
+export const uploadImage = async (req, res) => {
     try {
         // Convert the buffer into a base64 string
         const b64 = Buffer.from(req.file.buffer).toString('base64');
@@ -18,12 +18,12 @@ export const uploadImage = async (req, res) =>{
 
         // Upload image to Cloudinary
         const result = await handleImageUpload(fileData);
-        if(!result) {
+        if (!result) {
             logger.warn("Image upload failed");
-            return res.status(401).json({Success:false, Message:"Failed to upload image"});
+            return res.status(401).json({ Success: false, Message: "Failed to upload image" });
         }
         // console.log("Uploaded Image URL:", result.secure_url);
-        if(result.error){
+        if (result.error) {
             console.error("Error while uploading image:", result.error);
             return res.status(500).json({
                 Success: false,
@@ -48,39 +48,49 @@ export const uploadImage = async (req, res) =>{
 }
 export const uploadMultipleImages = async (req, res) => {
     try {
-		console.log("Files uploaded: ", req.files)
-		if(!req.files){
-			logger.warn("No images were provided");
-            return res.status(400).json({Success: true,message:"No images were provided!"});
-		}
-		if(req.files.length <= 0){
-			logger.warn("No images were provided");
-            return res.status(400).json({Success: true,message:"No images were provided!"});
-		}
+        console.log("Files uploaded: ", req.files)
+        if (!req.files) {
+            logger.warn("No images were provided");
+            return res.status(400).json({ Success: true, message: "No images were provided!" });
+        }
+        if (req.files.length <= 0) {
+            logger.warn("No images were provided");
+            return res.status(400).json({ Success: true, message: "No images were provided!" });
+        }
         const files = req.files.map(file => {
             const b64 = Buffer.from(file.buffer).toString('base64');
             return `data:${file.mimetype};base64,${b64}`;
         });
-		if(files.length <= 0){
+        if (files.length <= 0) {
             logger.warn("No images were provided");
-            return res.status(400).json({Success: true,message:"No images were provided!"});
+            return res.status(400).json({ Success: true, message: "No images were provided!" });
         }
         // Upload multiple images to Cloudinary
-        const results = await handleMultipleImageUpload(files);
-        console.log("Uploaded Images:", results);
-		if(!results){
-			console.error("No images were uploaded");
-            return res.status(400).json({Success: true,message:"No images were uploaded!"});
-		}
-		if(results.error){
-			throw new Error(results.error || "Error Uploading Images: ");
-		}
-		// console.log("Uploaded Images:", results.map(result => result.secure_url));
-        if(results.length <= 0) {
-            logger.warn("No images were uploaded");
-            return res.status(400).json({Success: true,message:"No images were uploaded!"});
+        let results;
+        try {
+            results = await handleMultipleImageUpload(files);
+        } catch (uploadError) {
+            console.error("Error uploading to Cloudinary:", uploadError);
+            logger.error('Error uploading to Cloudinary: ' + uploadError.message);
+            return res.status(500).json({
+                Success: false,
+                message: uploadError.message || 'Failed to upload images to Cloudinary'
+            });
         }
-		const imageArray = results?.map(result => result.secure_url);
+        console.log("Uploaded Images:", results);
+        if (!results) {
+            console.error("No images were uploaded");
+            return res.status(400).json({ Success: true, message: "No images were uploaded!" });
+        }
+        if (results.error) {
+            throw new Error(results.error || "Error Uploading Images: ");
+        }
+        // console.log("Uploaded Images:", results.map(result => result.secure_url));
+        if (results.length <= 0) {
+            logger.warn("No images were uploaded");
+            return res.status(400).json({ Success: true, message: "No images were uploaded!" });
+        }
+        const imageArray = results?.map(result => result.secure_url);
         // Return the uploaded image URLs
         return res.status(200).json({
             Success: true,
@@ -97,7 +107,7 @@ export const uploadMultipleImages = async (req, res) => {
     }
 };
 
-export const createNewCoupon = async(req,res)=>{
+export const createNewCoupon = async (req, res) => {
     try {
         const {
             couponName,
@@ -115,40 +125,40 @@ export const createNewCoupon = async(req,res)=>{
         } = req.body;
         // console.log("Creating new coupon: ",req.body);
         const newCoupon = new Coupon({
-            CouponName:couponName,
-            CouponCode:couponCode,
-            CouponType:couponType,
-            Description:couponDescription,
-            Discount:discount,
-            MinOrderAmount:minOrderAmount,
-            CustomerLogin:customerLogin,
-            FreeShipping:freeShipping,
-            ProductId:productId,
-            Category:category,
-            Status:status,
-            ValidDate:validDate,
+            CouponName: couponName,
+            CouponCode: couponCode,
+            CouponType: couponType,
+            Description: couponDescription,
+            Discount: discount,
+            MinOrderAmount: minOrderAmount,
+            CustomerLogin: customerLogin,
+            FreeShipping: freeShipping,
+            ProductId: productId,
+            Category: category,
+            Status: status,
+            ValidDate: validDate,
         });
         await newCoupon.save();
-        res.status(201).json({message: "Coupon created successfully", newCoupon});
+        res.status(201).json({ message: "Coupon created successfully", newCoupon });
     } catch (error) {
-        console.error("Error creating new coupon: ",error);
+        console.error("Error creating new coupon: ", error);
         logger.error("Error creating new coupon: " + error.message);
-        res.status(500).json({message: "Internal Server Error"});
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
-export const removeCoupon = async(req,res)=>{
+export const removeCoupon = async (req, res) => {
     try {
-        const{couponId} = req.params;
+        const { couponId } = req.params;
         const removed = await Coupon.findByIdAndDelete(couponId);
         if (!removed) {
             return res.status(404).json({ message: "Coupon not found" });
         }
         res.status(200).json({ message: "Coupon removed successfully", removed });
     } catch (error) {
-        console.error("Error removing coupon: ",error);
+        console.error("Error removing coupon: ", error);
         logger.error("Error removing coupon: " + error.message);
-        res.status(500).json({message: "Internal Server Error"});
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -230,26 +240,26 @@ export const editCoupon = async (req, res) => {
 };
 
 
-export const fetchAllCoupons = async(req, res) => {
+export const fetchAllCoupons = async (req, res) => {
     try {
         const coupons = await Coupon.find({});
-        res.status(200).json({message: "All coupons fetched successfully", result: coupons || []});
+        res.status(200).json({ message: "All coupons fetched successfully", result: coupons || [] });
     } catch (error) {
-        console.error("Error fetching all coupon",error);
-        res.status(500).json({message: "Internal Server Error",result:[]});
+        console.error("Error fetching all coupon", error);
+        res.status(500).json({ message: "Internal Server Error", result: [] });
     }
 }
-const isFormValid =(formData) => {
+const isFormValid = (formData) => {
     // console.log("Check Form: ",formData);
     const reasons = [];
-	if(!formData){
-		reasons.push("Form data is required.");
-		return {
-			isValid:reasons.length === 0,
-			reasons
-		}
-	}
-    if(!formData.productId){
+    if (!formData) {
+        reasons.push("Form data is required.");
+        return {
+            isValid: reasons.length === 0,
+            reasons
+        }
+    }
+    if (!formData.productId) {
         reasons.push("Product ID is required.");
     }
     // Title check
@@ -291,20 +301,26 @@ const isFormValid =(formData) => {
         reasons.push("Subcategory is required.");
     }
 
-    // Category check
-    if (formData.Width === undefined) {
+    // Dimensions check (accept both camelCase and PascalCase)
+    const width = formData.width || formData.Width;
+    const height = formData.height || formData.Height;
+    const length = formData.length || formData.Length;
+    const weight = formData.weight || formData.Weight;
+    const breadth = formData.breadth || formData.Breadth;
+
+    if (width === undefined || width === null || width === '') {
         reasons.push("width is required.");
     }
-    if (formData.Height === undefined) {
+    if (height === undefined || height === null || height === '') {
         reasons.push("height is required.");
     }
-    if (formData.Length === undefined) {
+    if (length === undefined || length === null || length === '') {
         reasons.push("length is required.");
     }
-    if (formData.Weight === undefined) {
+    if (weight === undefined || weight === null || weight === '') {
         reasons.push("weight is required.");
     }
-    if (formData.Breadth === undefined) {
+    if (breadth === undefined || breadth === null || breadth === '') {
         reasons.push("breadth is required.");
     }
     // Quantity check
@@ -317,7 +333,7 @@ const isFormValid =(formData) => {
     // If there are no reasons, the form is valid
 
     return {
-        isValid:reasons.length === 0,
+        isValid: reasons.length === 0,
         reasons
     }
 }
@@ -328,9 +344,9 @@ const isFormValid =(formData) => {
             title,
             shortTitle,
             size,
-			gst,
-			hsn,
-			sku,
+            gst,
+            hsn,
+            sku,
             description,
             specification,
             careInstructions,
@@ -355,9 +371,9 @@ const isFormValid =(formData) => {
 
         // Check if form data is valid
         const isValid = isFormValid(req.body)
-		
+    	
         if (!isValid || !isValid.isValid) {
-			throw new Error(`Missing Fields: ${getStringFromObject(isFormValid(req.body))}`);
+            throw new Error(`Missing Fields: ${getStringFromObject(isFormValid(req.body))}`);
         }
 
         // Handle colors
@@ -365,13 +381,13 @@ const isFormValid =(formData) => {
         size.forEach(s => {
             if (s.colors && s.colors.length > 0) {
                 s.colors.forEach(c => {
-					if(c.images && c.images.length > 0){
-						const colorsImageArray = c.images.filter(c => c !== "");
-						c.images = colorsImageArray;
-						AllColors.push(c);
-					}else{
-						throw new Error(`Missing Images for Color: ${c?.name}`);
-					}
+                    if(c.images && c.images.length > 0){
+                        const colorsImageArray = c.images.filter(c => c !== "");
+                        c.images = colorsImageArray;
+                        AllColors.push(c);
+                    }else{
+                        throw new Error(`Missing Images for Color: ${c?.name}`);
+                    }
                 });
             }
         });
@@ -420,8 +436,8 @@ const isFormValid =(formData) => {
             shortTitle,
             size,
             gst,
-			hsn,
-			sku,
+            hsn,
+            sku,
             description,
             careInstructions: careInstructions ? careInstructions : '',
             bulletPoints,
@@ -466,7 +482,7 @@ export const addNewProduct = async (req, res) => {
         if (salePrice <= 0) return 0;
         return ((price - salePrice) / price * 100).toFixed(0);
     };
-    
+
     // Helper function to handle color validations
     /* const handleColors = (size) => {
         const allColors = [];
@@ -491,7 +507,7 @@ export const addNewProduct = async (req, res) => {
                     if (!c.images || c.images.length === 0) {
                         throw new Error(`Missing Images for Color: ${c?.name}`);
                     }
-    
+
                     // Filter out empty images in a single line
                     const filteredImages = c.images.filter(image => image !== "");
                     if (filteredImages.length > 0) {
@@ -503,8 +519,8 @@ export const addNewProduct = async (req, res) => {
             return allColors;
         }, []);
     };
-    
-    
+
+
     // Helper function to calculate total stock
     const calculateTotalStock = (size) => {
         return size.reduce((totalStock, s) => {
@@ -536,11 +552,11 @@ export const addNewProduct = async (req, res) => {
             price,
             salePrice,
             Rating,
-            Width,
-            Height,
-            Length,
-            Weight,
-            Breadth,
+            width,
+            height,
+            length,
+            weight,
+            breadth,
         } = req.body;
 
         // Check if form data is valid
@@ -556,8 +572,8 @@ export const addNewProduct = async (req, res) => {
         // Calculate the discount percentage
         const DiscountedPercentage = price && salePrice ? calculateDiscountPercentage(price, salePrice) : 0;
 
-        // Create new product object
-        const newProduct = new ProductModel({
+        // Normalize dimensions: prefer camelCase, fallback to PascalCase
+        const normalizedData = {
             productId: productId?.toString(),
             title,
             shortTitle,
@@ -580,12 +596,15 @@ export const addNewProduct = async (req, res) => {
             totalStock,
             AllColors,
             Rating: Rating && Rating.length > 0 ? [Rating] : [],
-            width: Width,
-            height: Height,
-            length: Length,
-            weight: Weight,
-            breadth: Breadth,
-        });
+            width: width || undefined,
+            height: height || undefined,
+            length: length || undefined,
+            weight: weight || undefined,
+            breadth: breadth || undefined,
+        };
+
+        // Create new product object
+        const newProduct = new ProductModel(normalizedData);
 
         // Check if the product is successfully created
         if (!newProduct) {
@@ -596,12 +615,26 @@ export const addNewProduct = async (req, res) => {
         await newProduct.save();
 
         console.log("New Product Added:", newProduct);
-        res.status(201).json({ Success: true, message: 'Product added successfully!', result: newProduct });
+        res.status(201).json({
+            Success: true,
+            message: 'Product added successfully!',
+            result: newProduct
+        });
 
     } catch (error) {
         console.error('Error while adding new product:', error);
         logger.error("Error while creating new Product: " + error.message);
-        res.status(500).json({ Success: false, message: 'Internal Server Error', reasons: error.message });
+
+        // Return more detailed error information
+        const reasons = error.message.includes('Missing Fields')
+            ? error.message
+            : 'Internal Server Error';
+
+        res.status(400).json({
+            Success: false,
+            message: reasons || 'Internal Server Error',
+            reasons: error.message
+        });
     }
 };
 
@@ -619,10 +652,10 @@ export const editProduct = async (req, res) => {
             productId,
             title,
             size,
-			gst,
-			sku,
-			hsn,
-			tags,
+            gst,
+            sku,
+            hsn,
+            tags,
             description,
             specification,
             careInstructions,
@@ -640,15 +673,16 @@ export const editProduct = async (req, res) => {
             weight,
             breadth,
         } = req.body;
+
         // Initialize updateFields object
         const updateFields = {};
 
         // Helper function to conditionally add fields to updateFields
         const addToUpdate = (field, value) => {
-			
-			// console.log("Updating: ",field,Array.isArray(value));
-            if (value && (!Array.isArray(value) ? value.length > 0 : value.length > 0)) {
-                updateFields[field] = value;
+            if (value !== undefined && value !== null && value !== '') {
+                if (Array.isArray(value) ? value.length > 0 : true) {
+                    updateFields[field] = value;
+                }
             }
         };
 
@@ -691,18 +725,18 @@ export const editProduct = async (req, res) => {
         // [Value of supply x {100/ (100+GST%)}]
         // let priceWithGST = price * (100 / (100 + gst));
         // let salePriceWithGST = salePrice && salePrice > 0 ? salePrice * (100 / (100 + gst)) : null;
-        let priceWithGST = calculateGst(price,gst);
-        let salePriceWithGST = salePrice && salePrice > 0 ? calculateGst(salePrice,gst) : null;
+        let priceWithGST = calculateGst(price, gst);
+        let salePriceWithGST = salePrice && salePrice > 0 ? calculateGst(salePrice, gst) : null;
         // Add the recalculated price and salePrice to the updateFields
         if (price && price > 0) updateFields.price = price;
         if (salePrice && salePrice > 0) {
-			updateFields.salePrice = salePrice
-		}else{
-			updateFields.salePrice = null; // If no salePrice, set salePrice to null in the updateFields object.
-		}
+            updateFields.salePrice = salePrice
+        } else {
+            updateFields.salePrice = null; // If no salePrice, set salePrice to null in the updateFields object.
+        }
 
         // Calculate and set the DiscountedPercentage field if salePrice exists
-		
+
         /* if (price && salePrice && salePrice > 0) {
             const discountAmount = price - salePrice;
             const discountPercentage = ((discountAmount / salePrice) * 100).toFixed(0);
@@ -716,8 +750,8 @@ export const editProduct = async (req, res) => {
             // If no salePrice, set DiscountedPercentage to 0
             updateFields.DiscountedPercentage = discountPercentage;
         } */
-		const DiscountedPercentage = price && salePrice ? calculateDiscountPercentage(price, salePrice) : 0;
-		updateFields.DiscountedPercentage = DiscountedPercentage;
+        const DiscountedPercentage = price && salePrice ? calculateDiscountPercentage(price, salePrice) : 0;
+        updateFields.DiscountedPercentage = DiscountedPercentage;
         console.log("Updating Product Fields: ", updateFields);
 
         // If no fields to update, return early
@@ -753,7 +787,7 @@ export const addCustomProductsRating = async (req, res) => {
         // Find and update the product with the new rating
         const product = await ProductModel.findByIdAndUpdate(
             productId,
-            { $push: { Rating: ratingData } }, 
+            { $push: { Rating: ratingData } },
             { new: true }
         );
 
@@ -773,10 +807,10 @@ export const addCustomProductsRating = async (req, res) => {
         await product.save();
 
         console.log("Updated Product with Average Rating: ", product);
-        
+
         res.status(200).json({
-            Success: true, 
-            message: "Custom Rating Added Successfully", 
+            Success: true,
+            message: "Custom Rating Added Successfully",
             result: product
         });
 
@@ -787,47 +821,47 @@ export const addCustomProductsRating = async (req, res) => {
     }
 };
 
-export const fetchAllRatingProducts = async(req,res)=>{
+export const fetchAllRatingProducts = async (req, res) => {
     try {
-        const{productId} = req.params;
+        const { productId } = req.params;
         const product = await ProductModel.findById(productId);
         // console.log("allProducts: ",product);
-        if(!product) {
-            return res.status(404).json({Success: false, message: "Product not found"});
+        if (!product) {
+            return res.status(404).json({ Success: false, message: "Product not found" });
         }
-        res.status(200).json({Success:true, message: "All Products Rating Found",result:product.Rating || []})
+        res.status(200).json({ Success: true, message: "All Products Rating Found", result: product.Rating || [] })
     } catch (error) {
         console.error('Product Fetch Custom Rating Failed: ', error);
-        logger.error('Product Fetch Custom Rating Failed: '+ error.message);
-        return res.status(500).json({Success: false, message: 'Internal Server Error'});
+        logger.error('Product Fetch Custom Rating Failed: ' + error.message);
+        return res.status(500).json({ Success: false, message: 'Internal Server Error' });
     }
 }
-export const removeCustomProductsRating = async(req,res)=>{
+export const removeCustomProductsRating = async (req, res) => {
     try {
-        const {productId,ratingId} = req.body;
-        const product = await ProductModel.findByIdAndUpdate(productId, {$pull: {Rating: {_id: ratingId}}}, {new: true});
-		if(!product) {
-            return res.status(404).json({Success: false, message: "Product not found"});
+        const { productId, ratingId } = req.body;
+        const product = await ProductModel.findByIdAndUpdate(productId, { $pull: { Rating: { _id: ratingId } } }, { new: true });
+        if (!product) {
+            return res.status(404).json({ Success: false, message: "Product not found" });
         }
-		const total = product.Rating.reduce((acc, review) => acc + review.rating, 0);
-		const averageRating = total / product.Rating.length;
-		console.log("Updating Average Rating: ", averageRating);
-		// Update the product's average rating field
-		product.averageRating = !isNaN(averageRating) ?  Math.round(averageRating) : 0;
-		await product.save();
+        const total = product.Rating.reduce((acc, review) => acc + review.rating, 0);
+        const averageRating = total / product.Rating.length;
+        console.log("Updating Average Rating: ", averageRating);
+        // Update the product's average rating field
+        product.averageRating = !isNaN(averageRating) ? Math.round(averageRating) : 0;
+        await product.save();
         console.log("Removing Custom Rating: ", product);
-        res.status(200).json({Success:true,message:"Successfully Remove Rating Data"})
+        res.status(200).json({ Success: true, message: "Successfully Remove Rating Data" })
     } catch (error) {
         console.error('Product Update Failed: ', error);
-        logger.error('Product Add Custom Rating Failed: '+ error.message);
-        return res.status(500).json({Success: false, message: 'Internal Server Error'});
+        logger.error('Product Add Custom Rating Failed: ' + error.message);
+        return res.status(500).json({ Success: false, message: 'Internal Server Error' });
     }
 }
 
 export const fetchAllProducts = async (req, res) => {
     try {
-        const{page} = req.query;
-        console.log("Current Page: ",page);
+        const { page } = req.query;
+        console.log("Current Page: ", page);
 
         const allProducts = await ProductModel.find({});
         const totalProducts = await ProductModel.countDocuments();
@@ -836,45 +870,47 @@ export const fetchAllProducts = async (req, res) => {
 
         // Calculate the number of items to skip
         const skip = (currentPage - 1) * itemsPerPage;
-        
+
         // Get total count of products matching the filter
-        
+
 
         // Calculate total pages
         const totalPages = Math.ceil(totalProducts / itemsPerPage);
 
         // Fetch paginated products
         const productsPagination = await ProductModel.find({}).populate('Rating.userId').limit(itemsPerPage).skip(skip);
-        console.log("Total Pages: ",totalPages,"currentPage: ",currentPage,productsPagination.length);
+        console.log("Total Pages: ", totalPages, "currentPage: ", currentPage, productsPagination.length);
         // if(!allProducts) res.status(404).json({Success:false,message:"No products found"});
-        res.status(200).json({Success: true, message: 'All products fetched successfully!', result: {
-            productsPagination:productsPagination,
-            allProducts:allProducts,
-            totalProducts:totalProducts
-        }});
+        res.status(200).json({
+            Success: true, message: 'All products fetched successfully!', result: {
+                productsPagination: productsPagination,
+                allProducts: allProducts,
+                totalProducts: totalProducts
+            }
+        });
     } catch (error) {
         console.error('Error while Fetching all product:', error);
         logger.error("Error while Fetching all products: " + error.message);
-        res.status(500).json({Success: false, message: 'Internal Server Error'});
+        res.status(500).json({ Success: false, message: 'Internal Server Error' });
     }
 }
 export const getProductById = async (req, res) => {
     try {
-        const {id} = req.params;
-        if(!id) return res.status(400).json({Success:false,message:"Product ID is required"});
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ Success: false, message: "Product ID is required" });
         const product = await ProductModel.findById(id);
-        if(!product) res.status(404).json({Success:false,message:"Product not found"});
-        res.status(200).json({Success: true, message: 'Product fetched successfully!', result: product});
+        if (!product) res.status(404).json({ Success: false, message: "Product not found" });
+        res.status(200).json({ Success: true, message: 'Product fetched successfully!', result: product });
     } catch (error) {
         console.error('Error while Fetching a product:', error);
         logger.error("Error while Fetching a product: " + error.message);
-        res.status(500).json({Success: false, message: 'Internal Server Error'});
+        res.status(500).json({ Success: false, message: 'Internal Server Error' });
     }
 }
 
 
 
-    
+
 
 export const deleteProduct = async (req, res) => {
     try {
@@ -905,11 +941,11 @@ export const deleteProduct = async (req, res) => {
             // Execute all the updates in bulk
             await Bag.bulkWrite(bulkOps);
         }
-		const removeProductsFromWishList = await WhishList.find({
+        const removeProductsFromWishList = await WhishList.find({
             "orderItems.productId": id
         });
-		if (removeProductsFromWishList.length > 0) {
-			// Create an array of bulk update operations
+        if (removeProductsFromWishList.length > 0) {
+            // Create an array of bulk update operations
             const bulkOps = removeProductsFromWishList.map(wishList => {
                 const updatedOrderItems = wishList.orderItems.filter(item => item.productId.toString() !== id.toString());
                 return {
@@ -919,10 +955,10 @@ export const deleteProduct = async (req, res) => {
                     }
                 };
             });
-			
+
             // Execute all the updates in bulk
-			await WhishList.bulkWrite(bulkOps);
-		}
+            await WhishList.bulkWrite(bulkOps);
+        }
         // Return success response
         res.status(200).json({ Success: true, message: 'Product deleted successfully!', result: deletedProduct });
 
@@ -934,82 +970,82 @@ export const deleteProduct = async (req, res) => {
 };
 
 
-export const getOrderById = async(req,res)=>{
+export const getOrderById = async (req, res) => {
     try {
-        const{orderId} = req.params;
+        const { orderId } = req.params;
         const order = await OrderModel.findById(orderId);
-        if(!order){
-            return res.status(200).json({Success:true,message:"No Orders Found Yet",order:{}})
+        if (!order) {
+            return res.status(200).json({ Success: true, message: "No Orders Found Yet", order: {} })
         }
-		let lastStatus = order.status;
-		try {
-			const shipmenetOrder = await getShipmentOrderByOrderId(order)
-			if(shipmenetOrder){
-				if(shipmenetOrder.tracking_data){
-					const trackingData = shipmenetOrder.tracking_data;
-					order.status = getStatusDescription(trackingData.shipment_status)
-					order.shipment_status = trackingData.shipment_status;
-					order.current_status = getStatusDescription(trackingData.shipment_status);
-					order.etd = trackingData.etd;
-					order.trackingUrl = trackingData.track_url
-					order.tracking_Activity = trackingData.shipment_track_activities
-					await order.save();
-				}else{
-					const trackingData = shipmenetOrder[order.shipment_id].tracking_data;
-					console.log("Admin Checking shipment Tracking Data: ",trackingData);
-					order.status = getStatusDescription(trackingData.shipment_status)
-					order.shipment_status = trackingData.shipment_status;
-					order.current_status = getStatusDescription(trackingData.shipment_status);
-					order.etd = trackingData.etd || null;
-					order.trackingUrl = trackingData.track_url || ''
-					order.tracking_Activity = trackingData.shipment_track_activities || []
-					if(trackingData.error){
-						order.orderError = trackingData.error
-					}
-					await order.save();
-				}
-			}
-			if(lastStatus !== order.status){
-				try {
-					sendOrderStatusUpdateMail(order.userId,order);
-				} catch (error) {
-					console.error("Error sending order status update mail:", error);
-					logger.error("Error sending order status update mail: " + error.message);
-				}
-			}
-		} catch (error) {
-			console.error("Error while getting shipment Status Shiprocket: ",error);
-		}
+        let lastStatus = order.status;
+        try {
+            const shipmenetOrder = await getShipmentOrderByOrderId(order)
+            if (shipmenetOrder) {
+                if (shipmenetOrder.tracking_data) {
+                    const trackingData = shipmenetOrder.tracking_data;
+                    order.status = getStatusDescription(trackingData.shipment_status)
+                    order.shipment_status = trackingData.shipment_status;
+                    order.current_status = getStatusDescription(trackingData.shipment_status);
+                    order.etd = trackingData.etd;
+                    order.trackingUrl = trackingData.track_url
+                    order.tracking_Activity = trackingData.shipment_track_activities
+                    await order.save();
+                } else {
+                    const trackingData = shipmenetOrder[order.shipment_id].tracking_data;
+                    console.log("Admin Checking shipment Tracking Data: ", trackingData);
+                    order.status = getStatusDescription(trackingData.shipment_status)
+                    order.shipment_status = trackingData.shipment_status;
+                    order.current_status = getStatusDescription(trackingData.shipment_status);
+                    order.etd = trackingData.etd || null;
+                    order.trackingUrl = trackingData.track_url || ''
+                    order.tracking_Activity = trackingData.shipment_track_activities || []
+                    if (trackingData.error) {
+                        order.orderError = trackingData.error
+                    }
+                    await order.save();
+                }
+            }
+            if (lastStatus !== order.status) {
+                try {
+                    sendOrderStatusUpdateMail(order.userId, order);
+                } catch (error) {
+                    console.error("Error sending order status update mail:", error);
+                    logger.error("Error sending order status update mail: " + error.message);
+                }
+            }
+        } catch (error) {
+            console.error("Error while getting shipment Status Shiprocket: ", error);
+        }
 
-        res.status(200).json({Success:true,message:'Fetched All Orders',result:order})
+        res.status(200).json({ Success: true, message: 'Fetched All Orders', result: order })
     } catch (error) {
-        console.error("Error getting orders by Id: ",error);
+        console.error("Error getting orders by Id: ", error);
         logger.error("Error getting orders: " + error.message);
-        res.status(500).json({Success:false,message:"Internal Server Error",result:null});
+        res.status(500).json({ Success: false, message: "Internal Server Error", result: null });
     }
 }
-export const updateOrderStatus = async(req,res)=>{
+export const updateOrderStatus = async (req, res) => {
     try {
-        const {id} = req.user;
-        const{orderId} = req.params;
-        const{status} = req.body;
-        if(!orderId || !status){
-            return res.status(400).json({Success:false,message:"Order Id and Status are required"});
+        const { id } = req.user;
+        const { orderId } = req.params;
+        const { status } = req.body;
+        if (!orderId || !status) {
+            return res.status(400).json({ Success: false, message: "Order Id and Status are required" });
         }
-        const order = await OrderModel.findByIdAndUpdate(orderId,{status:status},{new:true});
-        if(!order){
-            return res.status(404).json({Success:false,message:"Order not found"});
+        const order = await OrderModel.findByIdAndUpdate(orderId, { status: status }, { new: true });
+        if (!order) {
+            return res.status(404).json({ Success: false, message: "Order not found" });
         }
         // const updateMailSent = await
-        const updateOrderStatusMailSent = await sendUpdateOrderStatus(id,order);
-        if(updateOrderStatusMailSent){
-            return res.status(200).json({Success:true,message:"Order Status Updated",result:order});
+        const updateOrderStatusMailSent = await sendUpdateOrderStatus(id, order);
+        if (updateOrderStatusMailSent) {
+            return res.status(200).json({ Success: true, message: "Order Status Updated", result: order });
         }
-        res.status(200).json({Success:false,message:"Failed to update order status"});
+        res.status(200).json({ Success: false, message: "Failed to update order status" });
     } catch (error) {
-        console.error("Error updating order status: ",error);
+        console.error("Error updating order status: ", error);
         logger.error("Error updating order status: " + error.message);
-        res.status(500).json({Success:false,message:"Internal Server Error",result:null});
+        res.status(500).json({ Success: false, message: "Internal Server Error", result: null });
     }
 }
 
@@ -1025,35 +1061,35 @@ export const getallOrders = async (req, res) => {
         // Fetch order status for each order and update the order with the new status
         const orderStatus = await Promise.all(allOrders.map(async (order) => {
             /* const shipmentTracking = await getShipmentTrackingStatus(order);
-			if(!shipmentTracking){
-				return null;
-			}
-			let trackingData = shipmentTracking?.tracking_data;
-			if(shipmentTracking.tracking_data){
-				trackingData = shipmentTracking.tracking_data
-			}else{
-				trackingData = shipmentTracking[order.shipment_id].tracking_data;
-			}
-			order.status = getStatusDescription(trackingData.shipment_status)
-			order.shipment_status = trackingData.shipment_status;
-			order.current_status = getStatusDescription(trackingData.shipment_status);
-			order.etd = trackingData.etd;
-			order.trackingUrl = trackingData.track_url
-			await order.save(); */
-			return {
-				...order.toObject(),
-				/* status: getStatusDescription(trackingData.shipment_status),
-				shipment_status: trackingData.shipment_status,
-				current_status: getStatusDescription(trackingData.shipment_status),
-				etd: trackingData.etd,
-				trackingUrl: trackingData.track_url, */
-			};
+            if(!shipmentTracking){
+                return null;
+            }
+            let trackingData = shipmentTracking?.tracking_data;
+            if(shipmentTracking.tracking_data){
+                trackingData = shipmentTracking.tracking_data
+            }else{
+                trackingData = shipmentTracking[order.shipment_id].tracking_data;
+            }
+            order.status = getStatusDescription(trackingData.shipment_status)
+            order.shipment_status = trackingData.shipment_status;
+            order.current_status = getStatusDescription(trackingData.shipment_status);
+            order.etd = trackingData.etd;
+            order.trackingUrl = trackingData.track_url
+            await order.save(); */
+            return {
+                ...order.toObject(),
+                /* status: getStatusDescription(trackingData.shipment_status),
+                shipment_status: trackingData.shipment_status,
+                current_status: getStatusDescription(trackingData.shipment_status),
+                etd: trackingData.etd,
+                trackingUrl: trackingData.track_url, */
+            };
         }));
-		// const token = await getShipRocketToken();
-		// console.log("order Status Updated Token: ", token);
+        // const token = await getShipRocketToken();
+        // console.log("order Status Updated Token: ", token);
         // Send the updated orders with current status
-		const refreshedNull = orderStatus.filter(stat => stat !== null)
-        res.status(200).json({ Success: true, message: "All Orders", result: refreshedNull || []});
+        const refreshedNull = orderStatus.filter(stat => stat !== null)
+        res.status(200).json({ Success: true, message: "All Orders", result: refreshedNull || [] });
     } catch (error) {
         console.error("Error Getting All Orders", error);
         logger.error(`Error Getting All Orders: ${error.message}`);
@@ -1061,44 +1097,44 @@ export const getallOrders = async (req, res) => {
     }
 };
 
-export const getShipmtRocketTokenFromDb = async(req,res)=>{
-	try {
-		const token = await WebSiteModel.findOne({ tag: 'Shiprocket-token' });
-		if(!token){
-			logger.warn(`No ShipRocket Token Found`);
-			return res.status(200).json({ Success: true, message: "No ShipRocket Token Found", result: null});
-		}
-		if(!token.ShiprocketToken){
-			logger.warn(`No ShipRocket Token Found`);
-			return res.status(200).json({ Success: true, message: "No ShipRocket Token Found", result: null});
-		}
-		// console.log("Shipwrecked Token Updated Token: ", token.ShiprocketToken);
-		res.status(200).json({ Success: true, message: "ShipRocket Token Fetched", result: token?.ShiprocketToken});
-	} catch (error) {
-		console.error("Error Getting ShipRocket Token from DB: ", error);
+export const getShipmtRocketTokenFromDb = async (req, res) => {
+    try {
+        const token = await WebSiteModel.findOne({ tag: 'Shiprocket-token' });
+        if (!token) {
+            logger.warn(`No ShipRocket Token Found`);
+            return res.status(200).json({ Success: true, message: "No ShipRocket Token Found", result: null });
+        }
+        if (!token.ShiprocketToken) {
+            logger.warn(`No ShipRocket Token Found`);
+            return res.status(200).json({ Success: true, message: "No ShipRocket Token Found", result: null });
+        }
+        // console.log("Shipwrecked Token Updated Token: ", token.ShiprocketToken);
+        res.status(200).json({ Success: true, message: "ShipRocket Token Fetched", result: token?.ShiprocketToken });
+    } catch (error) {
+        console.error("Error Getting ShipRocket Token from DB: ", error);
         logger.error("Error Getting ShipRocket Token from DB: " + error.message);
         res.status(500).json({ Success: false, message: "Internal Server Error" });
-	}
+    }
 }
 
-export const fetchAllReturnOrders = async(req,res) =>{
-	try {
-		const allReturnOrders = await getAllReturnOrdersShiprockets();
-		const returningOrdersData = allReturnOrders.data;
-		/* const allDbOrders = await OrderModel.find({});
-		if(!allDbOrders){
-			return res.status(200).json({ Success: true, message: "Fetched All Return Orders", result: returningOrdersData || []});
-		}
-		const commonIds = returningOrdersData.map(order => order.shipment_id);
-		const allDbOrderShipId = allDbOrders.map(order => order.shipment_id);
-		const similarOrders = allDbOrders.filter(order => commonIds.includes(order.shipment_id));
-		console.log("Not Found Orders: ",returningOrdersData) */
-		res.status(200).json({ Success: true, message: "Fetched All Return Orders", result: returningOrdersData || []});
-	} catch (error) {
-		console.error("Error fetching all return orders:",error);
-		logger.error("Error fetching all return orders: " + error.message);
-		res.status(500).json({ Success: false, message: "Internal Server Error" });
-	}
+export const fetchAllReturnOrders = async (req, res) => {
+    try {
+        const allReturnOrders = await getAllReturnOrdersShiprockets();
+        const returningOrdersData = allReturnOrders.data;
+        /* const allDbOrders = await OrderModel.find({});
+        if(!allDbOrders){
+            return res.status(200).json({ Success: true, message: "Fetched All Return Orders", result: returningOrdersData || []});
+        }
+        const commonIds = returningOrdersData.map(order => order.shipment_id);
+        const allDbOrderShipId = allDbOrders.map(order => order.shipment_id);
+        const similarOrders = allDbOrders.filter(order => commonIds.includes(order.shipment_id));
+        console.log("Not Found Orders: ",returningOrdersData) */
+        res.status(200).json({ Success: true, message: "Fetched All Return Orders", result: returningOrdersData || [] });
+    } catch (error) {
+        console.error("Error fetching all return orders:", error);
+        logger.error("Error fetching all return orders: " + error.message);
+        res.status(500).json({ Success: false, message: "Internal Server Error" });
+    }
 }
 
 

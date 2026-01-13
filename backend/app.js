@@ -2,6 +2,7 @@ import express from 'express';
 import bodyparser from 'body-parser';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import https from 'https';
 import adminRoute from './routes/adminRoutes/admin.route.js';
 import commonRoute from './routes/common.Routes/common.routes.js';
 import User from './routes/userroutes.js';
@@ -10,6 +11,9 @@ import Order from './routes/orderroutes.js';
 import paymentRoutes from './routes/payment.route.js';
 import razorPayRoute from './routes/razerPayPayment.route.js';
 import shipRocketHookRoute from './routes/logisticRoutes.js';
+
+// Fix for TLS certificate issues with Cloudinary uploads
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // Only for development - use proper certificates in production
 
 const app = express();
 
