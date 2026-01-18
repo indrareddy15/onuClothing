@@ -1,0 +1,20 @@
+# .gitignore
+
+# Ignore .env files (dotenv)
+.env
+.env.*
+
+# Ignore node_modules folder
+node_modules/
+
+dist
+
+# Optional: Ignore other common files
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Ignore Logs
+logs/
+.log
+.env
