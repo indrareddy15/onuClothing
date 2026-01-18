@@ -925,20 +925,63 @@ export const getShipmentOrderByOrderId = async (order) => {
         return null;
     }
 }
-export const getPickUpLocation = async () => {
-    // if(!token) await getAuthToken();
+const refreshAndSaveShipRocketToken = async () => {
     try {
-        const token = await getShipRocketToken();
-        const res = await axios.get(`${SHIPROCKET_API_URL}/settings/company/pickup`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        console.log("Refreshing ShipRocket Token...");
+        const token = await getAuthToken();
+        if (!token) throw new Error("Failed to authenticate with ShipRocket");
 
-        return res?.data?.data?.shipping_address;
+        const alreadySetShipRocketToken = await WebSiteModel.findOne({ tag: 'Shiprocket-token' });
+        const logInTime = new Date();
+        const expiringTime = new Date(logInTime);
+        expiringTime.setDate(logInTime.getDate() + 10);
+
+        if (alreadySetShipRocketToken) {
+            alreadySetShipRocketToken.ShiprocketToken = { token: token, expiringTime: expiringTime.toISOString() };
+            await alreadySetShipRocketToken.save();
+        } else {
+            const newWebsiteData = new WebSiteModel({
+                ShiprocketToken: { token: token, expiringTime: expiringTime.toISOString() },
+                tag: 'Shiprocket-token',
+            });
+            await newWebsiteData.save();
+        }
+        console.log("ShipRocket Token Refreshed and Saved.");
+        return token;
     } catch (error) {
-        // console.dir(error, { depth: null});
-        console.error("Error getting PickeUp Location: ", error?.response?.data);
+        console.error("Error Refreshing Token:", error.message);
+        return null;
+    }
+}
+
+export const getPickUpLocation = async () => {
+    try {
+        let token = await getShipRocketToken();
+        try {
+            const res = await axios.get(`${SHIPROCKET_API_URL}/settings/company/pickup`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            return res?.data?.data?.shipping_address || [];
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log("401 Unauthorized in getPickUpLocation, refreshing token...");
+                token = await refreshAndSaveShipRocketToken();
+                if (token) {
+                    const res = await axios.get(`${SHIPROCKET_API_URL}/settings/company/pickup`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    return res?.data?.data?.shipping_address || [];
+                }
+            }
+            throw error;
+        }
+    } catch (error) {
+        console.error("Error getting PickeUp Location: ", error?.response?.data || error.message);
+        return [];
     }
 }
 export const addNewPicketUpLocation = async (locationData) => {
@@ -961,29 +1004,55 @@ export const addNewPicketUpLocation = async (locationData) => {
 
 export const checkShipmentAvailability = async (delivary_pin, weight) => {
     try {
-        const token = await getShipRocketToken();
+        let token = await getShipRocketToken();
         const pickup_locations = await getPickUpLocation();
-        if (!token) await getAuthToken();
-        const picketUp_pin = pickup_locations[0]?.pin_code; // Assuming the first pickup location is the closest one
+
+        if (!pickup_locations || pickup_locations.length === 0) {
+            console.error("No pickup locations found.");
+            return null;
+        }
+
+        // Ensure token exists, if not try to get it (though getPickUpLocation might have just refreshed it)
+        if (!token) token = await getShipRocketToken();
+
+        const picketUp_pin = pickup_locations[0]?.pin_code;
         const shipmentData = {
-            cod: 1,  // Make sure `cod` is a boolean
+            cod: 1,
             pickup_postcode: picketUp_pin,
-            delivery_postcode: delivary_pin,  // Make sure `delivary_pin` is defined somewhere
-            weight: weight,  // Assuming `weight` is defined and a valid number
+            delivery_postcode: delivary_pin,
+            weight: weight,
         };
 
-        console.log("Shipment availability: ", shipmentData);
+        console.log("Shipment availability check for:", shipmentData);
 
-        const res = await axios.get(`${SHIPROCKET_API_URL}/courier/serviceability/`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            params: shipmentData,  // Use `params` for query parameters in GET requests
-        });
-        return res.data;
+        try {
+            const res = await axios.get(`${SHIPROCKET_API_URL}/courier/serviceability/`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                params: shipmentData,
+            });
+            return res.data;
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log("401 Unauthorized in checkShipmentAvailability, refreshing token...");
+                token = await refreshAndSaveShipRocketToken();
+                if (token) {
+                    const res = await axios.get(`${SHIPROCKET_API_URL}/courier/serviceability/`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                        params: shipmentData,
+                    });
+                    return res.data;
+                }
+            }
+            throw error;
+        }
+
     } catch (error) {
-        // console.dir(error, { depth: null});
-        console.error("Error Checking Pincode.: ", error)
+        console.error("Error Checking Pincode.: ", error?.message || error)
+        return null;
     }
 }
 export const getShipmentTrackingStatus = async (order) => {
