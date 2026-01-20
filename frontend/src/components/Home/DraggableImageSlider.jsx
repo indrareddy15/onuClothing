@@ -34,7 +34,7 @@ const DraggableImageSlider = ({
   const handleMouseMove = (e) => {
     if (!dragState.isDragging) return;
     const moveX = e.clientX - dragState.startX;
-    sliderRef.current.scrollLeft = dragState.scrollLeft - moveX + 400;
+    sliderRef.current.scrollLeft = dragState.scrollLeft - moveX;
   };
 
   const handleMouseUp = () =>
@@ -55,7 +55,7 @@ const DraggableImageSlider = ({
   const handleTouchMove = (e) => {
     if (!dragState.isDragging) return;
     const moveX = e.touches[0].clientX - dragState.startTouchX;
-    sliderRef.current.scrollLeft = dragState.scrollLeft - moveX + 400;
+    sliderRef.current.scrollLeft = dragState.scrollLeft - moveX;
   };
 
   const handleTouchEnd = () =>
@@ -84,7 +84,7 @@ const DraggableImageSlider = ({
   if (!images || images.length <= 0) return null;
   return (
     <div className="w-full max-w-screen-2xl mx-auto justify-self-center py-12">
-      <div className="grid grid-cols-1 min-h-[200px] relative px-4 md:px-14">
+      <div className="grid grid-cols-1 min-h-[200px] relative px-2 sm:px-4 md:px-14">
         {headers && (
           <div className="flex items-end justify-between mb-12 border-b border-white/20 pb-6">
             <div className="space-y-2">
@@ -121,10 +121,10 @@ const DraggableImageSlider = ({
           )}
 
           {/* Slider Container */}
-          <div className="w-full overflow-hidden rounded-2xl backdrop-blur-md bg-white/10 border border-white/20 p-6">
+          <div className="w-full overflow-hidden rounded-2xl backdrop-blur-md bg-white/10 border border-white/20 p-3 sm:p-6">
             <ul
               ref={sliderRef}
-              className="flex flex-row gap-8 overflow-x-scroll scrollbar-hide pb-4 pt-2"
+              className="flex flex-row gap-4 sm:gap-6 md:gap-8 overflow-x-scroll scrollbar-hide pb-4 pt-2"
               style={{
                 scrollBehavior: "smooth",
                 msOverflowStyle: "none",
@@ -140,45 +140,45 @@ const DraggableImageSlider = ({
             >
               {bannerLoading
                 ? Array(6)
-                    .fill(0)
-                    .map((_, index) => (
-                      <div
-                        key={`skeleton_${index}`}
-                        className="flex-shrink-0 w-[300px] h-[420px] bg-gradient-to-br from-gray-100/60 to-gray-200/60 rounded-2xl animate-pulse backdrop-blur-md border border-white/20"
-                      />
-                    ))
+                  .fill(0)
+                  .map((_, index) => (
+                    <div
+                      key={`skeleton_${index}`}
+                      className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[340px] h-[420px] bg-gradient-to-br from-gray-100/60 to-gray-200/60 rounded-2xl animate-pulse backdrop-blur-md border border-white/20"
+                    />
+                  ))
                 : images.map((image, index) => (
-                    <li
-                      key={`banner_${index}`}
-                      onClick={handleImageClick}
-                      className="flex-shrink-0 w-[300px] md:w-[340px] relative group/card cursor-pointer"
-                    >
-                      <div className="overflow-hidden rounded-2xl backdrop-blur-md bg-white/30 border border-white/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:bg-white/40">
-                        <LazyLoadImage
-                          effect="blur"
-                          useIntersectionObserver
-                          wrapperProps={{ style: { transitionDelay: "0.2s" } }}
-                          placeholder={
-                            <div className="w-full h-[420px] bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
-                          }
-                          src={image}
-                          alt={headers || "Collection Item"}
-                          className="w-full h-[420px] object-cover transition-transform duration-700 ease-out group-hover/card:scale-110"
-                          onDragStart={handleDragStart}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-transparent to-black/20 group-hover/card:from-black/5 group-hover/card:to-black/30 transition-all duration-500" />
+                  <li
+                    key={`banner_${index}`}
+                    onClick={handleImageClick}
+                    className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-[340px] relative group/card cursor-pointer"
+                  >
+                    <div className="overflow-hidden rounded-2xl backdrop-blur-md bg-white/30 border border-white/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:bg-white/40">
+                      <LazyLoadImage
+                        effect="blur"
+                        useIntersectionObserver
+                        wrapperProps={{ style: { transitionDelay: "0.2s" } }}
+                        placeholder={
+                          <div className="w-full h-[420px] bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />
+                        }
+                        src={image}
+                        alt={headers || "Collection Item"}
+                        className="w-full h-[420px] object-cover transition-transform duration-700 ease-out group-hover/card:scale-110"
+                        onDragStart={handleDragStart}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-transparent to-black/20 group-hover/card:from-black/5 group-hover/card:to-black/30 transition-all duration-500" />
 
-                        {/* Hover overlay with modern design */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all duration-500">
-                          <div className="backdrop-blur-md bg-white/20 border border-white/30 rounded-full px-6 py-3">
-                            <span className="text-white text-sm font-bold tracking-wider uppercase">
-                              View Collection
-                            </span>
-                          </div>
+                      {/* Hover overlay with modern design */}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-all duration-500">
+                        <div className="backdrop-blur-md bg-white/20 border border-white/30 rounded-full px-6 py-3">
+                          <span className="text-white text-sm font-bold tracking-wider uppercase">
+                            View Collection
+                          </span>
                         </div>
                       </div>
-                    </li>
-                  ))}
+                    </div>
+                  </li>
+                ))}
             </ul>
           </div>
         </div>

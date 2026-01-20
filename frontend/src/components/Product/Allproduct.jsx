@@ -46,8 +46,8 @@ const Allproductpage = ({ user }) => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const dispatchFetchAllProduct = () => {
-        dispatch(getproduct(currentPage));
+    const dispatchFetchAllProduct = (pageNum = 1) => {
+        dispatch(getproduct(pageNum));
     };
 
     const handleSortChange = (newSortBy) => {
@@ -56,7 +56,8 @@ const Allproductpage = ({ user }) => {
         urlParams.set('sortBy', newSortBy);
         const newUrl = `${currentUrl.pathname}?${urlParams.toString()}`;
         window.history.pushState({}, '', newUrl);
-        dispatchFetchAllProduct();
+        setCurrentPage(1);
+        dispatchFetchAllProduct(1);
     };
 
     const setTheCurrentSortValues = () => {
@@ -105,32 +106,33 @@ const Allproductpage = ({ user }) => {
             newValues.forEach(v => url.searchParams.append(key, v));
         }
         window.history.replaceState(null, "", url.toString());
-        dispatchFetchAllProduct();
+        setCurrentPage(1);
+        dispatchFetchAllProduct(1);
     };
 
     const clearFilters = () => {
+        const url = new URL(window.location.href);
+        url.search = '';
+        window.history.replaceState(null, "", url.toString());
+        setCurrentPage(1);
+        dispatchFetchAllProduct(1);
         handleFetchFilter();
     };
 
     useEffect(() => {
-        if (state1 === false) {
-            dispatch(getproduct());
-            handleFetchFilter();
-            setstate1(true);
-        }
+        dispatchFetchAllProduct(currentPage);
+    }, []);
 
-        if (error) {
-            dispatch(clearErrors());
-        }
-        if (state === false) {
-            if (productLoading === false) {
-                if (window.scroll > 0) {
-                    document.documentElement.scrollTo = 0;
-                }
-                setstate(true);
-            }
-        }
-    }, [dispatch, error, state, productLoading, state1]);
+    // Monitor URL changes for sorting, filtering
+    useEffect(() => {
+        const handleUrlChange = () => {
+            setCurrentPage(1);
+            dispatchFetchAllProduct(1);
+        };
+
+        window.addEventListener('popstate', handleUrlChange);
+        return () => window.removeEventListener('popstate', handleUrlChange);
+    }, []);
 
     useEffect(() => {
         setTheCurrentSortValues();
@@ -150,7 +152,7 @@ const Allproductpage = ({ user }) => {
                     handleResetFilter={handleFetchFilter}
                 />
             )}
-            <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+            <div className='w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 lg:pt-8'>
                 {/* Header Section */}
                 <div className='hidden lg:block mb-8'>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Shop All Products</h1>

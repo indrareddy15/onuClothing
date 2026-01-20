@@ -14,8 +14,8 @@ const CarousalView = ({ b_banners, indicator, bannerLoading = false }) => {
     return (
       <li
         className={`inline-block h-2 mx-2 rounded-full transition-all duration-500 cursor-pointer backdrop-blur-md border border-white/30 shadow-lg ${isSelected
-          ? "w-12 bg-white/90 scale-110"
-          : "w-3 bg-white/50 hover:bg-white/70 hover:scale-110"
+            ? "w-12 bg-white/90 scale-110"
+            : "w-3 bg-white/50 hover:bg-white/70 hover:scale-110"
           }`}
         onClick={onClickHandler}
         onKeyDown={onClickHandler}

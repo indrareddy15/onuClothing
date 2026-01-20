@@ -26,6 +26,19 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
 
     let lastScrollTop = 0;
 
+    // Helper function to deduplicate arrays case-insensitively
+    const deduplicateCaseInsensitive = (arr) => {
+        const seen = new Map();
+        return arr.filter(item => {
+            const key = String(item).toLowerCase();
+            if (seen.has(key)) {
+                return false;
+            }
+            seen.set(key, item);
+            return true;
+        });
+    };
+
     // Data processing
     let category = []
     let subcategory = []
@@ -54,13 +67,13 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
         });
     }
 
-    let Categorynewarray = [...new Set(category)];
-    let specialCategoryNewArray = [...new Set(specialCategory)];
+    let Categorynewarray = deduplicateCaseInsensitive(category);
+    let specialCategoryNewArray = deduplicateCaseInsensitive(specialCategory);
     let discountedPercentageAmountNewArray = [...new Set(discountedPercentageAmount)];
-    let subCategoryNewArray = [...new Set(subcategory)];
-    let gendernewarray = [...new Set(gender)];
+    let subCategoryNewArray = deduplicateCaseInsensitive(subcategory);
+    let gendernewarray = deduplicateCaseInsensitive(gender);
     let colornewarray = [...new Map(color.map(item => [item.label, item])).values()];
-    let sizenewArray = [...new Set(size)]
+    let sizenewArray = deduplicateCaseInsensitive(size);
     let sp = [...new Set(spARRAY.sort((a, b) => a - b))];
 
     const [price, setPrice] = useState(GetPrice().length > 0 ? GetPrice() : [Math.floor(Math.min(...sp) || 0), Math.floor(Math.max(...sp) || 1000)])
@@ -186,15 +199,21 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
     const renderFilterContent = () => {
         const searchParams = new URLSearchParams(window.location.search);
 
+        // Helper to get case-insensitive count
+        const getCaseInsensitiveCount = (item, sourceArray) => {
+            const itemLower = String(item).toLowerCase();
+            return sourceArray.filter(s => String(s).toLowerCase() === itemLower).length;
+        };
+
         switch (activeCategory) {
             case 'Gender':
-                return <FilterList items={gendernewarray} selectedItems={searchParams.getAll('gender')} onChange={(val) => handleFilterChange('gender', val)} getCount={(e) => gender.filter(g => g === e).length} />;
+                return <FilterList items={gendernewarray} selectedItems={searchParams.getAll('gender')} onChange={(val) => handleFilterChange('gender', val)} getCount={(e) => getCaseInsensitiveCount(e, gender)} />;
             case 'Categories':
-                return <FilterList items={Categorynewarray} selectedItems={searchParams.getAll('category')} onChange={(val) => handleFilterChange('category', val)} getCount={(e) => category.filter(c => c === e).length} />;
+                return <FilterList items={Categorynewarray} selectedItems={searchParams.getAll('category')} onChange={(val) => handleFilterChange('category', val)} getCount={(e) => getCaseInsensitiveCount(e, category)} />;
             case 'Sub Categories':
-                return <FilterList items={subCategoryNewArray} selectedItems={searchParams.getAll('subcategory')} onChange={(val) => handleFilterChange('subcategory', val)} getCount={(e) => subcategory.filter(s => s === e).length} />;
+                return <FilterList items={subCategoryNewArray} selectedItems={searchParams.getAll('subcategory')} onChange={(val) => handleFilterChange('subcategory', val)} getCount={(e) => getCaseInsensitiveCount(e, subcategory)} />;
             case 'Size':
-                return <FilterList items={sizenewArray} selectedItems={searchParams.getAll('size')} onChange={(val) => handleFilterChange('size', val)} getCount={(e) => size.filter(s => s === e).length} />;
+                return <FilterList items={sizenewArray} selectedItems={searchParams.getAll('size')} onChange={(val) => handleFilterChange('size', val)} getCount={(e) => getCaseInsensitiveCount(e, size)} />;
             case 'Price':
                 return (
                     <div className='p-6'>
@@ -217,9 +236,9 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
                     </div>
                 );
             case 'Color':
-                return <FilterList items={colornewarray} selectedItems={searchParams.getAll('color')} onChange={(val) => handleFilterChange('color', val.label)} type="color" getCount={(e) => color.filter(c => c.label === e.label).length} />;
+                return <FilterList items={colornewarray} selectedItems={searchParams.getAll('color')} onChange={(val) => handleFilterChange('color', val.label)} type="color" getCount={(e) => getCaseInsensitiveCount(e.label, color.map(c => c.label))} />;
             case 'Special Category':
-                return <FilterList items={specialCategoryNewArray} selectedItems={searchParams.getAll('specialCategory')} onChange={(val) => handleFilterChange('specialCategory', val)} getCount={(e) => specialCategory.filter(s => s === e).length} />;
+                return <FilterList items={specialCategoryNewArray} selectedItems={searchParams.getAll('specialCategory')} onChange={(val) => handleFilterChange('specialCategory', val)} getCount={(e) => getCaseInsensitiveCount(e, specialCategory)} />;
             case 'Discount':
                 return <FilterList items={discountedPercentageAmountNewArray.sort((a, b) => a - b)} selectedItems={searchParams.getAll('discountedAmount').map(Number)} onChange={handleDiscountChange} getLabel={(e) => `Up to ${e}% OFF`} getCount={(e) => discountedPercentageAmount.filter(d => d === e).length} />;
             case 'On Sale':

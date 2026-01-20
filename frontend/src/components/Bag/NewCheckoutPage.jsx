@@ -32,6 +32,7 @@ import { Skeleton } from '../ui/skeleton';
 // Sub-components
 import Footer from '../Footer/Footer';
 import OrderButton from './OrderButton';
+import AddAddressPopup from './AddAddressPopup';
 
 const CheckoutPage = () => {
 	const dispatch = useDispatch();
@@ -180,9 +181,10 @@ const CheckoutPage = () => {
 	const handleRazerPayPayment = async () => {
 		setIsPaymentProcessing(true);
 		try {
-			const userContact = user?.user?.phoneNumber;
-			const userEmail = user?.user?.email;
+			const userContact = user?.user?.phoneNumber || '';
+			const userEmail = user?.user?.email || '';
 			const userName = user?.user?.name || "User";
+			const userProfilePic = user?.user?.profilePic || '';
 			const bagId = bag?._id;
 
 			const orderItems = cartItems
@@ -217,7 +219,7 @@ const CheckoutPage = () => {
 				amount: data.order.amount,
 				currency: "INR",
 				name: userName,
-				image: user.user.profilePic,
+				image: userProfilePic,
 				description: "Order Payment",
 				order_id: data.order.id,
 				handler: function (response) {
@@ -411,7 +413,7 @@ const CheckoutPage = () => {
 												<Label htmlFor={`addr-${index}`} className="flex-1 cursor-pointer">
 													<div className="flex items-center justify-between">
 														<div className="flex items-center gap-2 mb-1">
-															<span className="font-medium text-gray-900">{address.Name || address.fullName || "User"}</span>
+															<span className="font-medium text-gray-900">{address.name || address.fullName || "User"}</span>
 															{index === 0 && (
 																<Badge variant="secondary" className="text-xs">Default</Badge>
 															)}
@@ -440,24 +442,21 @@ const CheckoutPage = () => {
 									</RadioGroup>
 								)}
 
-								<Dialog open={addressDialogOpen} onOpenChange={setAddressDialogOpen}>
-									<DialogTrigger asChild>
-										<Button variant="outline" className="w-full">
-											<Plus className="w-4 h-4 mr-2" />
-											Add New Address
-										</Button>
-									</DialogTrigger>
-									<DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-										<DialogHeader>
-											<DialogTitle>Add New Address</DialogTitle>
-										</DialogHeader>
-										<AddAddressForm
-											formData={formData}
-											onSave={handleSaveAddress}
-											onCancel={() => setAddressDialogOpen(false)}
-										/>
-									</DialogContent>
-								</Dialog>
+								<Button
+									variant="outline"
+									className="w-full"
+									onClick={() => setAddressDialogOpen(true)}
+								>
+									<Plus className="w-4 h-4 mr-2" />
+									Add New Address
+								</Button>
+
+								<AddAddressPopup
+									isOpen={addressDialogOpen}
+									onClose={() => setAddressDialogOpen(false)}
+									onSave={handleSaveAddress}
+									addressToEdit={null}
+								/>
 							</CardContent>
 						</Card>
 
@@ -617,89 +616,6 @@ const CheckoutPage = () => {
 
 			<Footer />
 		</div>
-	);
-};
-
-// Internal Add Address Form Component
-const AddAddressForm = ({ formData, onSave, onCancel }) => {
-	const { checkAndCreateToast } = useSettingsContext();
-	const [newAddress, setNewAddress] = useState({});
-	const [error, setError] = useState('');
-
-	const fetchStateAndCountry = async (pincode) => {
-		try {
-			const response = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`);
-			const responseData = response.data.length > 0 ? response.data[0] : null;
-			if (!responseData || responseData.PostOffice.length === 0) throw new Error("Invalid Pincode");
-
-			const data = responseData?.PostOffice[0];
-			if (data && data.State && data.Country && data.District) {
-				setNewAddress(prev => ({
-					...prev,
-					state: data.State,
-					City: data.District,
-					country: data.Country
-				}));
-			} else {
-				checkAndCreateToast('error', 'Invalid Pincode');
-			}
-		} catch (error) {
-			checkAndCreateToast('error', 'Failed to fetch details');
-		}
-	};
-
-	const handleChange = (e) => {
-		const { name, value } = e.target;
-		setNewAddress(prev => ({ ...prev, [name]: value }));
-
-		if (name === 'pincode' && value.length === 6) {
-			fetchStateAndCountry(value);
-		}
-	};
-
-	const handleSubmit = (e) => {
-		e.preventDefault();
-
-		// Basic Validation
-		if (newAddress['address1']?.length > 30) return checkAndCreateToast('error', 'Address 1 too long');
-		if (newAddress['phoneNumber']?.length !== 10) return checkAndCreateToast('error', 'Invalid Phone Number');
-		if (newAddress['pincode']?.length !== 6) return checkAndCreateToast('error', 'Invalid Pincode');
-
-		onSave(newAddress);
-	};
-
-	return (
-		<form onSubmit={handleSubmit} className="space-y-4">
-			{formData && formData.filter(item => item).map((item, index) => {
-				const key = removeSpaces(item);
-				return (
-					<div key={index} className="space-y-2">
-						<Label htmlFor={key}>
-							{capitalizeFirstLetterOfEachWord(item)}
-							<span className="text-red-500">*</span>
-						</Label>
-						<Input
-							id={key}
-							name={key}
-							value={newAddress[key] || ''}
-							onChange={handleChange}
-							placeholder={`Enter ${item}`}
-							required
-							type={key === 'phoneNumber' || key === 'pincode' ? 'number' : 'text'}
-						/>
-					</div>
-				);
-			})}
-
-			<div className="flex gap-3 pt-4">
-				<Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
-					Cancel
-				</Button>
-				<Button type="submit" className="flex-1 bg-black hover:bg-gray-800">
-					Save Address
-				</Button>
-			</div>
-		</form>
 	);
 };
 

@@ -4,11 +4,11 @@ import { useDispatch } from 'react-redux';
 import { Menu, Search, ShoppingBag, User, X, ChevronRight, Heart } from 'lucide-react';
 import { Allproduct } from '../../../action/productaction';
 import MProductsBar from './Msubmenu/ProductsBar';
-import MMen from './Msubmenu/Men';
-import MWoMen from './Msubmenu/Women';
-import MKids from './Msubmenu/Kids';
-import Mhome from './Msubmenu/Home';
-import Mbeauty from './Msubmenu/Beauty';
+// import MMen from './Msubmenu/Men';
+// import MWoMen from './Msubmenu/Women';
+// import MKids from './Msubmenu/Kids';
+// import Mhome from './Msubmenu/Home';
+// import Mbeauty from './Msubmenu/Beauty';
 import { useSessionStorage } from '../../../Contaxt/SessionStorageContext';
 import MKeywoardSerach from './MKeywoardSerach';
 import { useLocalStorage } from '../../../Contaxt/LocalStorageContext';
@@ -31,7 +31,7 @@ const MNavbar = () => {
 
     // Submenu states
     const [showShopMenu, setShowShopMenu] = useState(false);
-    const [showMenMenu, setShowMenMenu] = useState(false);
+    // const [showMenMenu, setShowMenMenu] = useState(false);
     const [showWomenMenu, setShowWomenMenu] = useState(false);
     const [showKidsMenu, setShowKidsMenu] = useState(false);
     const [showHomeMenu, setShowHomeMenu] = useState(false);
@@ -183,7 +183,7 @@ const MNavbar = () => {
                                 </div>
 
                                 {/* Men Dropdown */}
-                                <div>
+                                {/* <div>
                                     <MenuItem
                                         label="Men"
                                         onClick={() => setShowMenMenu(!showMenMenu)}
@@ -194,10 +194,10 @@ const MNavbar = () => {
                                             <MMen Men={showMenMenu ? "block" : "hidden"} fun1={handleMenuClose} fun2={() => { }} />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                                 {/* Women Dropdown */}
-                                <div>
+                                {/* <div>
                                     <MenuItem
                                         label="Women"
                                         onClick={() => setShowWomenMenu(!showWomenMenu)}
@@ -208,10 +208,10 @@ const MNavbar = () => {
                                             <MWoMen WoMen={showWomenMenu ? "block" : "hidden"} fun1={handleMenuClose} fun2={() => { }} />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                                 {/* Kids Dropdown */}
-                                <div>
+                                {/* <div>
                                     <MenuItem
                                         label="Kids"
                                         onClick={() => setShowKidsMenu(!showKidsMenu)}
@@ -222,10 +222,10 @@ const MNavbar = () => {
                                             <MKids MKids={showKidsMenu ? "block" : "hidden"} fun1={handleMenuClose} fun2={() => { }} />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                                 {/* Home & Living Dropdown */}
-                                <div>
+                                {/* <div>
                                     <MenuItem
                                         label="Home & Living"
                                         onClick={() => setShowHomeMenu(!showHomeMenu)}
@@ -236,10 +236,10 @@ const MNavbar = () => {
                                             <Mhome Mhome={showHomeMenu ? "block" : "hidden"} fun1={handleMenuClose} fun2={() => { }} />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                                 {/* Beauty Dropdown */}
-                                <div>
+                                {/* <div>
                                     <MenuItem
                                         label="Beauty"
                                         onClick={() => setShowBeautyMenu(!showBeautyMenu)}
@@ -250,7 +250,7 @@ const MNavbar = () => {
                                             <Mbeauty Mbeauty={showBeautyMenu ? "block" : "hidden"} fun1={handleMenuClose} fun2={() => { }} />
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                                 <MenuItem label="New Arrivals" onClick={() => { navigation("/products?sortBy=newest"); handleMenuClose(); }} />
                                 <MenuItem label="Best Sellers" onClick={() => { navigation("/products"); handleMenuClose(); }} />

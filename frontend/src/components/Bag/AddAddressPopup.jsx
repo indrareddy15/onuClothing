@@ -12,7 +12,8 @@ import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 
 const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
     const [newAddress, setNewAddress] = useState({
-        name: '',
+        firstName: '',
+        lastName: '',
         phoneNumber: '',
         pincode: '',
         address1: '',
@@ -29,8 +30,13 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
 
     useEffect(() => {
         if (addressToEdit) {
+            const nameParts = (addressToEdit.name || '').split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
             setNewAddress({
-                name: addressToEdit.name || '',
+                firstName: firstName,
+                lastName: lastName,
                 phoneNumber: addressToEdit.phoneNumber || '',
                 pincode: addressToEdit.pincode || '',
                 address1: addressToEdit.address1 || '',
@@ -42,7 +48,8 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
             });
         } else {
             setNewAddress({
-                name: '',
+                firstName: '',
+                lastName: '',
                 phoneNumber: '',
                 pincode: '',
                 address1: '',
@@ -101,7 +108,7 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
 
     const handleSave = () => {
         // Basic validation
-        if (!newAddress.name || !newAddress.phoneNumber || !newAddress.pincode || !newAddress.address1 || !newAddress.city || !newAddress.state) {
+        if (!newAddress.firstName || !newAddress.lastName || !newAddress.phoneNumber || !newAddress.pincode || !newAddress.address1 || !newAddress.city || !newAddress.state) {
             checkAndCreateToast('error', 'Please fill out all required fields.');
             return;
         }
@@ -123,8 +130,15 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
             return;
         }
 
-        onSave(newAddress);
-        // Reset handled by useEffect when isOpen changes or explicitly here if needed
+        // Combine firstName and lastName as 'name' for backend
+        const addressToSave = {
+            ...newAddress,
+            name: `${newAddress.firstName} ${newAddress.lastName}`
+        };
+        delete addressToSave.firstName;
+        delete addressToSave.lastName;
+
+        onSave(addressToSave);
         onClose();
         setError(null);
     };
@@ -143,16 +157,29 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
                 <div className="grid gap-6 py-4">
                     {/* Personal Information Section */}
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name" className="text-sm font-medium text-foreground">Full Name *</Label>
-                            <Input
-                                id="name"
-                                name="name"
-                                value={newAddress.name}
-                                onChange={handleChange}
-                                placeholder="John Doe"
-                                className="bg-background border-input"
-                            />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="firstName" className="text-sm font-medium text-foreground">First Name *</Label>
+                                <Input
+                                    id="firstName"
+                                    name="firstName"
+                                    value={newAddress.firstName}
+                                    onChange={handleChange}
+                                    placeholder="John"
+                                    className="bg-background border-input"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName" className="text-sm font-medium text-foreground">Last Name *</Label>
+                                <Input
+                                    id="lastName"
+                                    name="lastName"
+                                    value={newAddress.lastName}
+                                    onChange={handleChange}
+                                    placeholder="Doe"
+                                    className="bg-background border-input"
+                                />
+                            </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -232,7 +259,7 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
                                     name="city"
                                     value={newAddress.city}
                                     onChange={handleChange}
-                                    placeholder="Mumbai"
+                                    placeholder="City"
                                     className="bg-background border-input"
                                 />
                             </div>
@@ -243,7 +270,7 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
                                     name="state"
                                     value={newAddress.state}
                                     onChange={handleChange}
-                                    placeholder="Maharashtra"
+                                    placeholder="State"
                                     className="bg-background border-input"
                                 />
                             </div>

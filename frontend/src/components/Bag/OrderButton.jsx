@@ -1,47 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import './OrderButton.css';
+import React, { useState } from 'react';
+import { Loader2, Check, Package } from 'lucide-react';
 
 const OrderButton = ({ onClick, disabled, isLoading }) => {
-    const [isAnimating, setIsAnimating] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
 
-    const handleClick = (e) => {
-        if (disabled || isLoading || isAnimating) return;
-
-        setIsAnimating(true);
+    const handleClick = async (e) => {
+        if (disabled || isLoading || isSuccess) return;
 
         if (onClick) {
-            onClick(e);
+            try {
+                await onClick(e);
+                // Show success state for 2 seconds
+                setIsSuccess(true);
+                setTimeout(() => {
+                    setIsSuccess(false);
+                }, 2000);
+            } catch (error) {
+                console.error('Order error:', error);
+            }
         }
-
-        // Reset animation after 10 seconds
-        setTimeout(() => {
-            setIsAnimating(false);
-        }, 10000);
     };
 
     return (
         <button
-            className={`truck-order-button ${isAnimating ? 'animate' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleClick}
-            disabled={disabled || isLoading}
+            disabled={disabled || isLoading || isSuccess}
+            className={`w-full py-3 px-6 rounded-lg font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2 ${disabled
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : isSuccess
+                        ? 'bg-green-500 text-white hover:bg-green-600'
+                        : isLoading
+                            ? 'bg-gray-900 text-white cursor-wait'
+                            : 'bg-gray-900 text-white hover:bg-black active:scale-95'
+                }`}
         >
-            <span className="default">Place Order</span>
-            <span className="success">
-                Order Placed
-                <svg viewBox="0 0 12 10">
-                    <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-                </svg>
-            </span>
-            <div className="box"></div>
-            <div className="truck">
-                <div className="back"></div>
-                <div className="front">
-                    <div className="window"></div>
-                </div>
-                <div className="light top"></div>
-                <div className="light bottom"></div>
-            </div>
-            <div className="lines"></div>
+            {isSuccess ? (
+                <>
+                    <Check className="w-5 h-5 animate-pulse" />
+                    <span>Order Placed Successfully</span>
+                </>
+            ) : isLoading ? (
+                <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Processing Order...</span>
+                </>
+            ) : (
+                <>
+                    <Package className="w-5 h-5" />
+                    <span>Place Order</span>
+                </>
+            )}
         </button>
     );
 };
