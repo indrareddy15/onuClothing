@@ -182,10 +182,22 @@ const AdminProducts = () => {
         const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             product.productId?.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesCategory = filters.category === 'all' || product.category === filters.category;
-        const matchesSubCategory = filters.subCategory === 'all' || product.subCategory === filters.subCategory;
-        const matchesGender = filters.gender === 'all' || product.gender === filters.gender;
-        const matchesSpecial = filters.specialCategory === 'all' || product.specialCategory === filters.specialCategory;
+        // Case-insensitive category matching
+        const matchesCategory = filters.category === 'all' ||
+            (product.category && product.category.toLowerCase() === filters.category.toLowerCase());
+
+        // Case-insensitive sub-category matching
+        const matchesSubCategory = filters.subCategory === 'all' ||
+            (product.subCategory && product.subCategory.toLowerCase() === filters.subCategory.toLowerCase());
+
+        // Case-insensitive gender matching
+        const matchesGender = filters.gender === 'all' ||
+            (product.gender && product.gender.toLowerCase() === filters.gender.toLowerCase());
+
+        // Special category matching - handle undefined/null values
+        const matchesSpecial = filters.specialCategory === 'all' ||
+            (product.specialCategory && filters.specialCategory &&
+                product.specialCategory.toLowerCase() === filters.specialCategory.toLowerCase());
 
         let matchesStock = true;
         if (filters.sort === 'low_stock') {

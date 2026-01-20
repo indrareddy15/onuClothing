@@ -354,7 +354,7 @@ const AdminOrderLayout = () => {
 										<TableCell>
 											<div className="flex flex-col">
 												<span className="font-medium">
-													{order?.address?.Firstname} {order?.address?.Lastname}
+													{order?.address?.Firstname} {order?.address?.Lastname} {order?.address?.name}
 												</span>
 											</div>
 										</TableCell>
