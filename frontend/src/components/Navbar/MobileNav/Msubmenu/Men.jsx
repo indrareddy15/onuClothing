@@ -24,6 +24,16 @@ const MMen = ({ Men, fun1, fun2 }) => {
     fun1(); // Close menu
   };
 
+  const handleSubcategoryNavigation = (subcategory, category, gender = 'men') => {
+    const queryParams = new URLSearchParams();
+    queryParams.set('subcategory', subcategory.toLowerCase());
+    queryParams.set('category', category.toLowerCase());
+    queryParams.set('gender', gender.toLowerCase());
+
+    navigate(`/products?${queryParams.toString()}`);
+    fun1(); // Close menu
+  };
+
   const SubMenuItem = ({ title, isActive, onClick, children }) => (
     <div className="border-b border-gray-100 last:border-0">
       <button
@@ -56,84 +66,84 @@ const MMen = ({ Men, fun1, fun2 }) => {
 
   return (
     <div className={`w-full ${Men}`}>
-      {/* <SubMenuItem
+      <SubMenuItem
         title="Topwear"
         isActive={activeSection === 'Topwear'}
         onClick={() => toggleSection('Topwear')}
       >
         {Topwear.map((data, index) => (
-          <LinkItem key={index} title={data.title} onClick={() => handleCategoryNavigation('Topwear')} />
+          <LinkItem key={index} title={data.title} onClick={() => handleSubcategoryNavigation(data.title, 'Topwear')} />
         ))}
-      </SubMenuItem> */}
+      </SubMenuItem>
 
-      {/* <SubMenuItem
+      <SubMenuItem
         title="Indian & Festive Wear"
         isActive={activeSection === 'Indian'}
         onClick={() => toggleSection('Indian')}
       >
         {indian_festive.map((data, index) => (
-          <LinkItem key={index} title={data.title} onClick={() => { fun1(); fun2(); }} />
+          <LinkItem key={index} title={data.title} onClick={() => handleSubcategoryNavigation(data.title, 'Indian & Festive Wear')} />
         ))}
-      </SubMenuItem> */}
+      </SubMenuItem>
 
-      {/* <SubMenuItem
+      <SubMenuItem
         title="Bottomwear"
         isActive={activeSection === 'Bottomwear'}
         onClick={() => toggleSection('Bottomwear')}
       >
         {bottomwear.map((data, index) => (
-          <LinkItem key={index} title={data.title} onClick={() => handleCategoryNavigation('Bottomwear')} />
+          <LinkItem key={index} title={data.title} onClick={() => handleSubcategoryNavigation(data.title, 'Bottomwear')} />
         ))}
-      </SubMenuItem> */}
+      </SubMenuItem>
 
-      {/* <SubMenuItem
+      <SubMenuItem
         title="Innerwear & Sleepwear"
         isActive={activeSection === 'Innerwear'}
         onClick={() => toggleSection('Innerwear')}
       >
         {Innerwear_Sleepwear.map((data, index) => (
-          <LinkItem key={index} title={data.title} onClick={() => { fun1(); fun2(); }} />
+          <LinkItem key={index} title={data.title} onClick={() => handleSubcategoryNavigation(data.title, 'Innerwear & Sleepwear')} />
         ))}
-      </SubMenuItem> */}
+      </SubMenuItem>
 
-      {/* <LinkItem title="Plus Size" onClick={() => { fun1(); fun2(); }} />
-      <LinkItem title="Footwear" onClick={() => { fun1(); fun2(); }} />
-      <LinkItem title="Personal Care & Grooming" onClick={() => { fun1(); fun2(); }} />
-      <LinkItem title="Sunglasses & Frames" onClick={() => { fun1(); fun2(); }} />
-      <LinkItem title="Watches" onClick={() => { fun1(); fun2(); }} /> */}
-      {/* 
+      <LinkItem title="Plus Size" onClick={() => handleCategoryNavigation('Plus Size')} />
+      <LinkItem title="Footwear" onClick={() => handleCategoryNavigation('Footwear')} />
+      <LinkItem title="Personal Care & Grooming" onClick={() => handleCategoryNavigation('Personal Care & Grooming')} />
+      <LinkItem title="Sunglasses & Frames" onClick={() => handleCategoryNavigation('Sunglasses & Frames')} />
+      <LinkItem title="Watches" onClick={() => handleCategoryNavigation('Watches')} />
+
       <SubMenuItem
         title="Sports & Active Wear"
         isActive={activeSection === 'Sports'}
         onClick={() => toggleSection('Sports')}
       >
         {Sports_Active_Wear.map((data, index) => (
-          <LinkItem key={index} title={data.title} onClick={() => { fun1(); fun2(); }} />
+          <LinkItem key={index} title={data.title} onClick={() => handleSubcategoryNavigation(data.title, 'Sports & Active Wear')} />
         ))}
-      </SubMenuItem> */}
+      </SubMenuItem>
 
-      {/* <SubMenuItem
+      <SubMenuItem
         title="Gadgets"
         isActive={activeSection === 'Gadgets'}
         onClick={() => toggleSection('Gadgets')}
       >
         {Gadgets.map((data, index) => (
-          <LinkItem key={index} title={data.title} onClick={() => { fun1(); fun2(); }} />
+          <LinkItem key={index} title={data.title} onClick={() => handleSubcategoryNavigation(data.title, 'Gadgets')} />
         ))}
-      </SubMenuItem> */}
+      </SubMenuItem>
 
-      {/* <SubMenuItem
+      <SubMenuItem
         title="Fashion Accessories"
         isActive={activeSection === 'Fashion'}
         onClick={() => toggleSection('Fashion')}
       >
         {Fashion_Accessories.map((data, index) => (
-          <LinkItem key={index} title={data.title} onClick={() => { fun1(); fun2(); }} />
+          <LinkItem key={index} title={data.title} onClick={() => handleSubcategoryNavigation(data.title, 'Fashion Accessories')} />
         ))}
-      </SubMenuItem> */}
+      </SubMenuItem>
 
-      {/* <LinkItem title="Bags & Backpacks" onClick={() => { fun1(); fun2(); }} />
-      <LinkItem title="Luggages & Trolleys" onClick={() => { fun1(); fun2(); }} /> */}
+      <LinkItem title="Bags & Backpacks" onClick={() => handleCategoryNavigation('Bags & Backpacks')} />
+      <LinkItem title="Luggages & Trolleys" onClick={() => handleCategoryNavigation('Luggages & Trolleys')} />
     </div>
   );
 };

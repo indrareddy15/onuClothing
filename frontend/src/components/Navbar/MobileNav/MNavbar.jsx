@@ -65,7 +65,6 @@ const MNavbar = () => {
     const handleMenuClose = () => {
         setMenuShow(false);
         setShowShopMenu(false);
-        setShowMenMenu(false);
         setShowWomenMenu(false);
         setShowKidsMenu(false);
         setShowHomeMenu(false);

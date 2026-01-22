@@ -10,6 +10,7 @@ import BackToTopButton from '../Home/BackToTopButton';
 import WhatsAppButton from '../Home/WhatsAppButton';
 import { getReverseSortingValueValues, getSortingKeyValuePairs } from '../../config';
 import { useServerBanners } from '../../Contaxt/ServerBannerContext';
+import { useLocation } from 'react-router-dom';
 import {
     Pagination,
     PaginationContent,
@@ -35,6 +36,7 @@ const Allproductpage = ({ user }) => {
     const [state1, setstate1] = useState(false);
     const scrollableDivRef = useRef(null);
     const dispatch = useDispatch();
+    const location = useLocation();
     const { product, pro, loading: productLoading, error, length } = useSelector(state => state.Allproducts);
     const { noFilterProducts, productAllProductsLoading, handleFetchFilter } = useServerBanners();
     const [sortvalue, setSortValue] = useState('What`s New');
@@ -133,6 +135,12 @@ const Allproductpage = ({ user }) => {
         window.addEventListener('popstate', handleUrlChange);
         return () => window.removeEventListener('popstate', handleUrlChange);
     }, []);
+
+    // Monitor location changes for filter updates (when using useNavigate)
+    useEffect(() => {
+        setCurrentPage(1);
+        dispatchFetchAllProduct(1);
+    }, [location.search]);
 
     useEffect(() => {
         setTheCurrentSortValues();
