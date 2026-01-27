@@ -28,6 +28,15 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
     const [error, setError] = useState(null);
     const { checkAndCreateToast } = useSettingsContext();
 
+    // Cleanup effect to ensure body scroll is restored
+    useEffect(() => {
+        return () => {
+            // Ensure body overflow is restored on unmount
+            document.body.style.overflow = 'unset';
+            document.body.style.pointerEvents = 'unset';
+        };
+    }, []);
+
     useEffect(() => {
         if (addressToEdit) {
             const nameParts = (addressToEdit.name || '').split(' ');
@@ -149,136 +158,141 @@ const AddAddressPopup = ({ isOpen, onClose, onSave, addressToEdit }) => {
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[600px] bg-card text-card-foreground border-border">
-                <DialogHeader>
+            <DialogContent
+                className="sm:max-w-[600px] max-h-[90vh] w-[95vw] sm:w-full flex flex-col bg-card text-card-foreground border-border p-0"
+                aria-describedby={undefined}
+            >
+                <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0 flex-shrink-0">
                     <DialogTitle className="text-xl font-semibold text-foreground">{addressToEdit ? "Edit Address" : "Add New Address"}</DialogTitle>
                 </DialogHeader>
 
-                <div className="grid gap-6 py-4">
-                    {/* Personal Information Section */}
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="firstName" className="text-sm font-medium text-foreground">First Name *</Label>
-                                <Input
-                                    id="firstName"
-                                    name="firstName"
-                                    value={newAddress.firstName}
-                                    onChange={handleChange}
-                                    placeholder="John"
-                                    className="bg-background border-input"
-                                />
+                <div className="overflow-y-auto flex-1 px-4 sm:px-6 py-4">
+                    <div className="grid gap-6">
+                        {/* Personal Information Section */}
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="firstName" className="text-sm font-medium text-foreground">First Name *</Label>
+                                    <Input
+                                        id="firstName"
+                                        name="firstName"
+                                        value={newAddress.firstName}
+                                        onChange={handleChange}
+                                        placeholder="John"
+                                        className="bg-background border-input"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName" className="text-sm font-medium text-foreground">Last Name *</Label>
+                                    <Input
+                                        id="lastName"
+                                        name="lastName"
+                                        value={newAddress.lastName}
+                                        onChange={handleChange}
+                                        placeholder="Doe"
+                                        className="bg-background border-input"
+                                    />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="lastName" className="text-sm font-medium text-foreground">Last Name *</Label>
-                                <Input
-                                    id="lastName"
-                                    name="lastName"
-                                    value={newAddress.lastName}
-                                    onChange={handleChange}
-                                    placeholder="Doe"
-                                    className="bg-background border-input"
-                                />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="phoneNumber" className="text-sm font-medium text-foreground">Phone Number *</Label>
+                                    <Input
+                                        id="phoneNumber"
+                                        name="phoneNumber"
+                                        value={newAddress.phoneNumber}
+                                        onChange={handleChange}
+                                        placeholder="1234567890"
+                                        type="number"
+                                        className="bg-background border-input"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-foreground block mb-3">Address Type</Label>
+                                    <RadioGroup
+                                        value={newAddress.addressType}
+                                        onValueChange={handleAddressTypeChange}
+                                        className="flex gap-6"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="home" id="home" className="border-primary text-primary" />
+                                            <Label htmlFor="home" className="text-sm font-normal text-foreground">Home</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <RadioGroupItem value="office" id="office" className="border-primary text-primary" />
+                                            <Label htmlFor="office" className="text-sm font-normal text-foreground">Office</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="phoneNumber" className="text-sm font-medium text-foreground">Phone Number *</Label>
-                                <Input
-                                    id="phoneNumber"
-                                    name="phoneNumber"
-                                    value={newAddress.phoneNumber}
-                                    onChange={handleChange}
-                                    placeholder="1234567890"
-                                    type="number"
-                                    className="bg-background border-input"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-sm font-medium text-foreground block mb-3">Address Type</Label>
-                                <RadioGroup
-                                    value={newAddress.addressType}
-                                    onValueChange={handleAddressTypeChange}
-                                    className="flex gap-6"
-                                >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="home" id="home" className="border-primary text-primary" />
-                                        <Label htmlFor="home" className="text-sm font-normal text-foreground">Home</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="office" id="office" className="border-primary text-primary" />
-                                        <Label htmlFor="office" className="text-sm font-normal text-foreground">Office</Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
-                        </div>
-                    </div>
 
-                    {/* Address Information Section */}
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="address1" className="text-sm font-medium text-foreground">Address Line 1 *</Label>
-                            <Input
-                                id="address1"
-                                name="address1"
-                                value={newAddress.address1}
-                                onChange={handleChange}
-                                placeholder="House/Flat No., Building Name"
-                                className="bg-background border-input"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="address2" className="text-sm font-medium text-foreground">Address Line 2</Label>
-                            <Input
-                                id="address2"
-                                name="address2"
-                                value={newAddress.address2}
-                                onChange={handleChange}
-                                placeholder="Street, Area, Landmark"
-                                className="bg-background border-input"
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {/* Address Information Section */}
+                        <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="pincode" className="text-sm font-medium text-foreground">Postal Code *</Label>
+                                <Label htmlFor="address1" className="text-sm font-medium text-foreground">Address Line 1 *</Label>
                                 <Input
-                                    id="pincode"
-                                    name="pincode"
-                                    value={newAddress.pincode}
+                                    id="address1"
+                                    name="address1"
+                                    value={newAddress.address1}
                                     onChange={handleChange}
-                                    placeholder="400001"
-                                    type="number"
-                                    maxLength={6}
+                                    placeholder="House/Flat No., Building Name"
                                     className="bg-background border-input"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="city" className="text-sm font-medium text-foreground">City *</Label>
+                                <Label htmlFor="address2" className="text-sm font-medium text-foreground">Address Line 2</Label>
                                 <Input
-                                    id="city"
-                                    name="city"
-                                    value={newAddress.city}
+                                    id="address2"
+                                    name="address2"
+                                    value={newAddress.address2}
                                     onChange={handleChange}
-                                    placeholder="City"
+                                    placeholder="Street, Area, Landmark"
                                     className="bg-background border-input"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="state" className="text-sm font-medium text-foreground">State *</Label>
-                                <Input
-                                    id="state"
-                                    name="state"
-                                    value={newAddress.state}
-                                    onChange={handleChange}
-                                    placeholder="State"
-                                    className="bg-background border-input"
-                                />
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="pincode" className="text-sm font-medium text-foreground">Postal Code *</Label>
+                                    <Input
+                                        id="pincode"
+                                        name="pincode"
+                                        value={newAddress.pincode}
+                                        onChange={handleChange}
+                                        placeholder="400001"
+                                        type="number"
+                                        maxLength={6}
+                                        className="bg-background border-input"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="city" className="text-sm font-medium text-foreground">City *</Label>
+                                    <Input
+                                        id="city"
+                                        name="city"
+                                        value={newAddress.city}
+                                        onChange={handleChange}
+                                        placeholder="City"
+                                        className="bg-background border-input"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="state" className="text-sm font-medium text-foreground">State *</Label>
+                                    <Input
+                                        id="state"
+                                        name="state"
+                                        value={newAddress.state}
+                                        onChange={handleChange}
+                                        placeholder="State"
+                                        className="bg-background border-input"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <DialogFooter className="flex gap-3 sm:justify-end">
+                <DialogFooter className="flex gap-3 sm:justify-end px-4 sm:px-6 pb-4 sm:pb-6 pt-4 border-t border-border flex-shrink-0">
                     <Button
                         variant="outline"
                         onClick={onClose}
