@@ -16,7 +16,7 @@ import { useSettingsContext } from '../../Contaxt/SettingsContext';
 import { useEncryptionDecryptionContext } from '../../Contaxt/EncryptionContext';
 
 // Config and Utils
-import { BASE_API_URL, BASE_CLIENT_URL, RAZERPAY_KEY, calculateDiscountPercentage, capitalizeFirstLetterOfEachWord, formattedSalePrice, headerConfig, removeSpaces } from '../../config';
+import { BASE_API_URL, BASE_CLIENT_URL, RAZORPAY_KEY, calculateDiscountPercentage, capitalizeFirstLetterOfEachWord, formattedSalePrice, headerConfig, removeSpaces } from '../../config';
 
 // UI Components
 import { Button } from '../ui/button';
@@ -215,7 +215,7 @@ const CheckoutPage = () => {
 			}
 
 			const razorpayOptions = {
-				key: RAZERPAY_KEY,
+				key: RAZEOPAY_KEY,
 				amount: data.order.amount,
 				currency: "INR",
 				name: userName,

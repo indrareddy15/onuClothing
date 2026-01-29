@@ -14,6 +14,25 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
     const dispatch = useDispatch();
     const [colorul, setcolorul] = useState('max-h-80');
 
+    // Helper function to deduplicate arrays case-insensitively
+    const deduplicateCaseInsensitive = (arr) => {
+        const seen = new Map();
+        return arr.filter(item => {
+            const key = String(item).toLowerCase();
+            if (seen.has(key)) {
+                return false;
+            }
+            seen.set(key, item);
+            return true;
+        });
+    };
+
+    // Helper to get case-insensitive count
+    const getCaseInsensitiveCount = (item, sourceArray) => {
+        const itemLower = String(item).toLowerCase();
+        return sourceArray.filter(s => String(s).toLowerCase() === itemLower).length;
+    };
+
     let AllProductsCategory = [];
     let AllProductsSubcategory = [];
     let size = []
@@ -118,26 +137,26 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
         SetOnSale();
         setDiscountedPercentage();
     }, [product, window.location.search])
+
     categoriesarray();
     subcategoryarray();
     genderarray();
     colorarray();
     sizearray();
     SetOnSale();
-
     specialCategoryArray();
     setDiscountedPercentage();
     sparray();
 
-    // Remove duplicates and sort price array
-    let Categorynewarray = [...new Set(AllProductsCategory)];
-    let sizenewarray = [...new Set(size)];
-    let gendernewarray = [...new Set(AllProductsGender)];
+    // Remove duplicates and sort price array with case-insensitive deduplication
+    let Categorynewarray = deduplicateCaseInsensitive(AllProductsCategory);
+    let sizenewarray = deduplicateCaseInsensitive(size);
+    let gendernewarray = deduplicateCaseInsensitive(AllProductsGender);
     let colornewarray = [
         ...new Map(AllProductsColor.map(item => [item.label, item])).values()
     ];
-    let subcategorynewarray = [...new Set(AllProductsSubcategory)];
-    let specialCategorynewarray = [...new Set(specialCategory)];
+    let subcategorynewarray = deduplicateCaseInsensitive(AllProductsSubcategory);
+    let specialCategorynewarray = deduplicateCaseInsensitive(specialCategory);
     let discountedPercentageAmountnewarray = [...new Set(discountedPercentageAmount)];
     let sp = [...new Set(spARRAY.sort((a, b) => a - b))];
 
@@ -443,7 +462,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
                     items={gendernewarray}
                     selectedValues={new URLSearchParams(window.location.search).getAll("gender")}
                     onChange={genderfun}
-                    getCount={(e) => AllProductsGender.filter((f) => f === e).length}
+                    getCount={(e) => getCaseInsensitiveCount(e, AllProductsGender)}
                 />
 
                 <FilterGroup
@@ -452,7 +471,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
                     items={Categorynewarray}
                     selectedValues={new URLSearchParams(window.location.search).getAll("category")}
                     onChange={categoryfun}
-                    getCount={(e) => AllProductsCategory.filter((f) => f === e).length}
+                    getCount={(e) => getCaseInsensitiveCount(e, AllProductsCategory)}
                 />
 
                 <FilterGroup
@@ -461,7 +480,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
                     items={subcategorynewarray}
                     selectedValues={new URLSearchParams(window.location.search).getAll("subcategory")}
                     onChange={subcategoryfun}
-                    getCount={(e) => AllProductsSubcategory.filter((f) => f === e).length}
+                    getCount={(e) => getCaseInsensitiveCount(e, AllProductsSubcategory)}
                 />
 
                 <FilterGroup
@@ -470,7 +489,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
                     items={sizenewarray}
                     selectedValues={new URLSearchParams(window.location.search).getAll("size")}
                     onChange={sizefun}
-                    getCount={(e) => size.filter((f) => f === e).length}
+                    getCount={(e) => getCaseInsensitiveCount(e, size)}
                 />
 
                 <FilterGroup
@@ -479,7 +498,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
                     items={specialCategorynewarray}
                     selectedValues={new URLSearchParams(window.location.search).getAll("specialCategory")}
                     onChange={specialCategoryFun}
-                    getCount={(e) => specialCategory.filter((f) => f === e).length}
+                    getCount={(e) => getCaseInsensitiveCount(e, specialCategory)}
                 />
 
                 <FilterGroup
@@ -503,7 +522,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
                     onChange={(color) => colorfun(color)}
                     getValue={(e) => e.label}
                     getLabel={(e) => e.name}
-                    getCount={(e) => AllProductsColor.filter((f) => f.label === e.label).length}
+                    getCount={(e) => getCaseInsensitiveCount(e.label, AllProductsColor.map(c => c.label))}
                     maxDisplay={5}
                     showToggle={true}
                     expanded={colorul === 'max-h-max'}
