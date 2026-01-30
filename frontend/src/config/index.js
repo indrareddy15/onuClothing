@@ -388,12 +388,12 @@ export const clothingSizeChartData = [
 export const sanitizeInput = (input) => {
 	return input.replace(/[^a-zA-Z0-9]/g, ''); // Removes anything that's not alphanumeric
 };
-export const BASE_CLIENT_URL = import.meta.env.VITE_CLIENT_URL || "http://localhost:3000";
+export const BASE_CLIENT_URL = import.meta.env.VITE_CLIENT_URL;
 export const inProduction = import.meta.env.REACT_APP_NODE_ENV === 'production' ? true : false;
 
 
 export const SECREAT_KEY = import.meta.env.REACT_APP_SECREAT_KEY || '53fdb688706c681b8742ce4ee16291be301396612e9b6c5772ca9d4a8803fedc';
 export const ORDER_ENCRYPTION_SECREAT_KEY = import.meta.env.REACT_APP_ORDER_ENCRYPTION_SECREAT_KEY || 'c41909436dc9d80b70e601d70c66f9776c0b88cd4af5aa2c2e6c21a5e33619e8';
-export const RAZORPAY_KEY = import.meta.env.VITE_RAZERPAY_KEY || import.meta.env.REACT_APP_RAZERPAY_KEY || 'rzp_test_F4YiOVghwT97VF';
+export const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || import.meta.env.REACT_APP_RAZORPAY_KEY;
 
 

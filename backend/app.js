@@ -9,7 +9,7 @@ import User from './routes/userroutes.js';
 import Product from './routes/productroute.js';
 import Order from './routes/orderroutes.js';
 import paymentRoutes from './routes/payment.route.js';
-import razorPayRoute from './routes/razerPayPayment.route.js';
+import razorPayRoute from './routes/razorPayPayment.route.js';
 import shipRocketHookRoute from './routes/logisticRoutes.js';
 
 // Fix for TLS certificate issues with Cloudinary uploads
@@ -91,7 +91,7 @@ app.use('/api/auth', User);
 app.use('/api/shop/products', Product);
 app.use('/api/shop/order_bag_wishList', Order);
 app.use('/api/payment', paymentRoutes);
-app.use('/api/payment/razerypay', razorPayRoute);
+app.use('/api/payment/razorpay', razorPayRoute);
 app.use('/api/logistic', shipRocketHookRoute);
 
 

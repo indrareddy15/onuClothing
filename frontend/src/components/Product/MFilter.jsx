@@ -14,7 +14,7 @@ import { Label } from '../../components/ui/label'
 import { Button } from '../../components/ui/button'
 import { cn } from '../../lib/utils'
 
-const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollableDivRef, handleResetFilter }) => {
+const MFilter = ({ product, filteredProducts, sortvalue, handleSortChange, setSortValue, scrollableDivRef, handleResetFilter }) => {
     const dispatch = useDispatch()
     const navigation = useNavigate()
     const [scrollPosition, setScrollPosition] = useState(0);
@@ -25,6 +25,9 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
     const [isSortOpen, setIsSortOpen] = useState(false);
 
     let lastScrollTop = 0;
+
+    // Use filteredProducts for counts if available, otherwise fall back to all products
+    const productsForCounting = filteredProducts && filteredProducts.length > 0 ? filteredProducts : product;
 
     // Helper function to deduplicate arrays case-insensitively
     const deduplicateCaseInsensitive = (arr) => {
@@ -50,8 +53,8 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
     let spARRAY = []
     let onSale = []
 
-    if (product && product.length > 0) {
-        product.forEach(p => {
+    if (productsForCounting && productsForCounting.length > 0) {
+        productsForCounting.forEach(p => {
             if (p.category) category.push(p.category);
             if (p.subCategory) subcategory.push(p.subCategory);
             if (p.specialCategory && p.specialCategory !== "none") specialCategory.push(p.specialCategory);
@@ -72,9 +75,17 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
     let discountedPercentageAmountNewArray = [...new Set(discountedPercentageAmount)];
     let subCategoryNewArray = deduplicateCaseInsensitive(subcategory);
     let gendernewarray = deduplicateCaseInsensitive(gender);
-    let colornewarray = [...new Map(color.map(item => [item.label, item])).values()];
+    let colornewarray = [...new Map(color.map(item => [item.label.toLowerCase(), item])).values()];
     let sizenewArray = deduplicateCaseInsensitive(size);
     let sp = [...new Set(spARRAY.sort((a, b) => a - b))];
+
+    // Helper function to count products with a specific color
+    const getColorCount = (colorLabel) => {
+        const colorLower = String(colorLabel).toLowerCase();
+        return productsForCounting.filter(p =>
+            p.AllColors && p.AllColors.some(c => String(c.label).toLowerCase() === colorLower)
+        ).length;
+    };
 
     const [price, setPrice] = useState(GetPrice().length > 0 ? GetPrice() : [Math.floor(Math.min(...sp) || 0), Math.floor(Math.max(...sp) || 1000)])
 
@@ -102,9 +113,15 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
         let url = new URL(window.location.href);
         let selectedValues = url.searchParams.getAll(key);
 
-        if (selectedValues.includes(value)) {
-            selectedValues = selectedValues.filter(v => v !== value);
+        // Case-insensitive comparison for checking if value is already selected
+        const valueLower = String(value).toLowerCase();
+        const isSelected = selectedValues.some(v => String(v).toLowerCase() === valueLower);
+
+        if (isSelected) {
+            // Remove the selected value (case-insensitive)
+            selectedValues = selectedValues.filter(v => String(v).toLowerCase() !== valueLower);
         } else {
+            // Add the new value
             selectedValues.push(value);
         }
 
@@ -236,7 +253,7 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
                     </div>
                 );
             case 'Color':
-                return <FilterList items={colornewarray} selectedItems={searchParams.getAll('color')} onChange={(val) => handleFilterChange('color', val.label)} type="color" getCount={(e) => getCaseInsensitiveCount(e.label, color.map(c => c.label))} />;
+                return <FilterList items={colornewarray} selectedItems={searchParams.getAll('color')} onChange={(val) => handleFilterChange('color', val.label)} type="color" getCount={(e) => getColorCount(e.label)} />;
             case 'Special Category':
                 return <FilterList items={specialCategoryNewArray} selectedItems={searchParams.getAll('specialCategory')} onChange={(val) => handleFilterChange('specialCategory', val)} getCount={(e) => getCaseInsensitiveCount(e, specialCategory)} />;
             case 'Discount':
@@ -346,27 +363,38 @@ const MFilter = ({ product, sortvalue, handleSortChange, setSortValue, scrollabl
 }
 
 const FilterList = ({ items = [], selectedItems = [], onChange, type = 'text', getLabel = (e) => e, getCount = () => 0 }) => {
+    const handleItemChange = (item) => {
+        onChange(item);
+    };
+
     return (
         <div className="divide-y divide-gray-100">
             {items.map((item, index) => {
                 const value = type === 'color' ? item.label : item;
-                const isSelected = selectedItems.includes(value.toString());
+                // Case-insensitive check for selected state
+                const valueLower = String(value).toLowerCase();
+                const isSelected = selectedItems.some(selected => String(selected).toLowerCase() === valueLower);
 
                 return (
-                    <div key={index} className="flex items-center justify-between px-4 py-3 active:bg-gray-50" onClick={() => onChange(item)}>
+                    <label key={index} htmlFor={`filter-${index}`} className="flex items-center justify-between px-4 py-3 active:bg-gray-50 cursor-pointer hover:bg-gray-50">
                         <div className="flex items-center gap-3">
-                            <Checkbox checked={isSelected} onCheckedChange={() => onChange(item)} id={`filter-${index}`} />
+                            <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => handleItemChange(item)}
+                                id={`filter-${index}`}
+                                onClick={(e) => e.stopPropagation()}
+                            />
                             {type === 'color' ? (
                                 <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: item.label }}></div>
-                                    <Label htmlFor={`filter-${index}`} className="text-sm capitalize cursor-pointer">{item.name}</Label>
+                                    <span className="text-sm capitalize">{item.name}</span>
                                 </div>
                             ) : (
-                                <Label htmlFor={`filter-${index}`} className="text-sm capitalize cursor-pointer">{capitalizeFirstLetterOfEachWord(getLabel(item))}</Label>
+                                <span className="text-sm capitalize">{capitalizeFirstLetterOfEachWord(getLabel(item))}</span>
                             )}
                         </div>
                         <span className="text-xs text-gray-400">({getCount(item)})</span>
-                    </div>
+                    </label>
                 )
             })}
         </div>

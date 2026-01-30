@@ -178,7 +178,7 @@ const CheckoutPage = () => {
 
 
 	// Payment Handlers
-	const handleRazerPayPayment = async () => {
+	const handleRazorPayPayment = async () => {
 		setIsPaymentProcessing(true);
 		try {
 			const userContact = user?.user?.phoneNumber || '';
@@ -199,7 +199,7 @@ const CheckoutPage = () => {
 
 			// Request order creation from the backend
 			const { data } = await axios.post(
-				`${BASE_API_URL}/api/payment/razerypay/order`,
+				`${BASE_API_URL}/api/payment/razorpay/order`,
 				{
 					amount: totals.total,
 					userId: user.id,
@@ -215,7 +215,7 @@ const CheckoutPage = () => {
 			}
 
 			const razorpayOptions = {
-				key: RAZEOPAY_KEY,
+				key: RAZORPAY_KEY,
 				amount: data.order.amount,
 				currency: "INR",
 				name: userName,
@@ -326,7 +326,7 @@ const CheckoutPage = () => {
 			}
 
 		} else {
-			handleRazerPayPayment();
+			handleRazorPayPayment();
 		}
 	};
 

@@ -156,6 +156,7 @@ const Allproductpage = ({ user }) => {
                     setSortValue={setTheCurrentSortValues}
                     scrollableDivRef={scrollableDivRef}
                     product={noFilterProducts}
+                    filteredProducts={product}
                     handleSortChange={handleSortChange}
                     handleResetFilter={handleFetchFilter}
                 />
@@ -200,6 +201,7 @@ const Allproductpage = ({ user }) => {
                             {!productAllProductsLoading && noFilterProducts && noFilterProducts.length > 0 && (
                                 <FilterView
                                     product={noFilterProducts}
+                                    filteredProducts={product}
                                     dispatchFetchAllProduct={dispatchFetchAllProduct}
                                     handleResetFilter={handleFetchFilter}
                                 />

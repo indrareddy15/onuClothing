@@ -9,10 +9,13 @@ import { Label } from '../../components/ui/label';
 import PriceSlider from './PriceSlider';
 import { cn } from '../../lib/utils';
 
-const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => {
+const FilterView = ({ product, filteredProducts, dispatchFetchAllProduct, handleResetFilter }) => {
 
     const dispatch = useDispatch();
     const [colorul, setcolorul] = useState('max-h-80');
+
+    // Use filteredProducts for counts if available, otherwise fall back to all products
+    const productsForCounting = filteredProducts && filteredProducts.length > 0 ? filteredProducts : product;
 
     // Helper function to deduplicate arrays case-insensitively
     const deduplicateCaseInsensitive = (arr) => {
@@ -46,15 +49,15 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
     const result = [[], [], []] //we create it, then we'll fill it    
     // Generate category, gender, color, and price arrays
     const categoriesarray = () => {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 AllProductsCategory.push(p.category)
             });
         }
     };
     function SetOnSale() {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 if (p.salePrice && p.salePrice > 0) {
                     onSale.push(p.salePrice)
                 }
@@ -62,8 +65,8 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
         }
     }
     function setDiscountedPercentage() {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 if (p.salePrice && p.salePrice > 0) {
                     const amount = Math.floor(p.DiscountedPercentage);
                     discountedPercentageAmount.push(amount)
@@ -72,8 +75,8 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
         }
     }
     const specialCategoryArray = () => {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 specialCategory.push(p.specialCategory)
                 if (p.specialCategory !== "none" && p.specialCategory !== undefined) {
                 }
@@ -81,8 +84,8 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
         }
     };
     const subcategoryarray = () => {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 AllProductsSubcategory.push(p.subCategory)
             });
         }
@@ -90,15 +93,15 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
 
 
     const genderarray = () => {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 AllProductsGender.push(p.gender)
             });
         }
     };
     function sizearray() {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 if (p) {
                     p.size.forEach(s => {
                         size.push(s.label);
@@ -109,8 +112,8 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
     }
 
     const colorarray = () => {
-        if (product && product.length > 0) {
-            product.forEach(p => {
+        if (productsForCounting && productsForCounting.length > 0) {
+            productsForCounting.forEach(p => {
                 p.AllColors.forEach(c => {
                     AllProductsColor.push(c);
                 })
@@ -119,7 +122,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
     };
 
     const sparray = () => {
-        product.forEach(p => {
+        productsForCounting.forEach(p => {
             const currentPrice = p.price;
             if (!spARRAY.includes(currentPrice)) {
                 spARRAY.push(currentPrice);
@@ -153,12 +156,20 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
     let sizenewarray = deduplicateCaseInsensitive(size);
     let gendernewarray = deduplicateCaseInsensitive(AllProductsGender);
     let colornewarray = [
-        ...new Map(AllProductsColor.map(item => [item.label, item])).values()
+        ...new Map(AllProductsColor.map(item => [item.label.toLowerCase(), item])).values()
     ];
     let subcategorynewarray = deduplicateCaseInsensitive(AllProductsSubcategory);
     let specialCategorynewarray = deduplicateCaseInsensitive(specialCategory);
     let discountedPercentageAmountnewarray = [...new Set(discountedPercentageAmount)];
     let sp = [...new Set(spARRAY.sort((a, b) => a - b))];
+
+    // Helper function to count products with a specific color
+    const getColorCount = (colorLabel) => {
+        const colorLower = String(colorLabel).toLowerCase();
+        return productsForCounting.filter(p =>
+            p.AllColors && p.AllColors.some(c => String(c.label).toLowerCase() === colorLower)
+        ).length;
+    };
 
     const setPriceFilter = () => {
         const wordsPerLine = Math.ceil(sp.length / 3)
@@ -346,21 +357,22 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
     const colorfun = (colorHex) => {
         let url = new URL(window.location.href);
 
-        // Get the current 'subcategory' array from the URL (if any)
+        // Get the current color array from the URL (if any)
         let selectColor = url.searchParams.getAll('color'); // This will return an array
 
-        // Check if the subcategory is already in the array
-        const isSelected = selectColor.includes(colorHex);
+        // Check if the color is already in the array (case-insensitive comparison)
+        const colorLower = String(colorHex).toLowerCase();
+        const isSelected = selectColor.some(col => String(col).toLowerCase() === colorLower);
 
         if (isSelected) {
-            // If the subcategory is already selected, remove it from the array
-            selectColor = selectColor.filter(col => col !== colorHex);
+            // If the color is already selected, remove it from the array (case-insensitive)
+            selectColor = selectColor.filter(col => String(col).toLowerCase() !== colorLower);
         } else {
-            // If the subcategory is not selected, add it to the array
+            // If the color is not selected, add it to the array
             selectColor.push(colorHex);
         }
 
-        // Clear the existing 'subcategory' parameters and append the updated array
+        // Clear the existing color parameters and append the updated array
         url.searchParams.delete('color');
         selectColor.forEach(col => {
             url.searchParams.append('color', col);
@@ -522,7 +534,7 @@ const FilterView = ({ product, dispatchFetchAllProduct, handleResetFilter }) => 
                     onChange={(color) => colorfun(color)}
                     getValue={(e) => e.label}
                     getLabel={(e) => e.name}
-                    getCount={(e) => getCaseInsensitiveCount(e.label, AllProductsColor.map(c => c.label))}
+                    getCount={(e) => getColorCount(e.label)}
                     maxDisplay={5}
                     showToggle={true}
                     expanded={colorul === 'max-h-max'}
@@ -591,7 +603,9 @@ const FilterGroup = ({
                     displayItems.map((item, i) => {
                         const value = getValue(item);
                         const label = getLabel(item);
-                        const isChecked = selectedValues.includes(value);
+                        // Case-insensitive check for selected state
+                        const valueLower = String(value).toLowerCase();
+                        const isChecked = selectedValues.some(selected => String(selected).toLowerCase() === valueLower);
 
                         return (
                             <div key={i} className="flex items-center justify-between">

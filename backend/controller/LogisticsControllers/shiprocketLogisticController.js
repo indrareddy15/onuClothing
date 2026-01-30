@@ -589,8 +589,8 @@ export const generateRefundOrder = async (order) => {
         const { paymentId, TotalAmount } = order;
 
         // Retrieve the Razorpay API Key and API Secret from environment variables (keep them secure)
-        const razorpayApiKey = process.env.RAZER_PG_ID;  // Replace with your actual key
-        const razorpayApiSecret = process.env.RAZER_PG_SECRETE;  // Replace with your actual secret
+        const razorpayApiKey = process.env.RAZOR_PG_ID;  // Replace with your actual key
+        const razorpayApiSecret = process.env.RAZOR_PG_SECRETE;  // Replace with your actual secret
 
         // Base64 encode the API key and secret for Basic Authentication
         const auth = Buffer.from(`${razorpayApiKey}:${razorpayApiSecret}`).toString('base64');

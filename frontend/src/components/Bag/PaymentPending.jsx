@@ -30,7 +30,7 @@ const PaymentPending = () => {
 			return;
 		}
 		try {
-			const response = await axios.post(`${BASE_API_URL}/api/payment/razerypay/paymentVerification`, data, headerConfig())
+			const response = await axios.post(`${BASE_API_URL}/api/payment/razorpay/paymentVerification`, data, headerConfig())
 			if (response?.data?.success) {
 				// sessionStorage.removeItem("checkoutData")
 				checkAndCreateToast("success", "Payment Successful");
