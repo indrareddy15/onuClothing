@@ -26,15 +26,6 @@ const allowedOrigins = [
     process.env.API_URL,        // e.g. https://api.theonu.in
     process.env.CLIENT_URL,     // e.g. https://theonu.in
     process.env.CLIENT_URL_ADMIN, // e.g. https://admin.theonu.in
-    'http://localhost:3000',    // Frontend development server
-    'http://localhost:3001',
-    'http://localhost:5173',    // Vite default dev server
-    'http://localhost:5174',    // Admin frontend dev server
-    'http://localhost:5176',    // Admin frontend dev server
-    'http://localhost:5175',    // Admin frontend dev server
-    'http://127.0.0.1:3000',    // Alternative localhost
-    'http://127.0.0.1:5173',    // Alternative localhost
-    'http://127.0.0.1:5174',    // Alternative localhost
 ];
 
 // Debug CORS origins in development
