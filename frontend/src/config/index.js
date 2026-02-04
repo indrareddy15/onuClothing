@@ -391,7 +391,6 @@ export const sanitizeInput = (input) => {
 export const BASE_CLIENT_URL = import.meta.env.VITE_CLIENT_URL;
 export const inProduction = import.meta.env.REACT_APP_NODE_ENV === 'production' ? true : false;
 
-
-export const SECREAT_KEY = import.meta.env.REACT_APP_SECREAT_KEY;
-export const ORDER_ENCRYPTION_SECREAT_KEY = import.meta.env.REACT_APP_ORDER_ENCRYPTION_SECREAT_KEY;
+export const SECREAT_KEY = import.meta.env.REACT_APP_SECREAT_KEY || import.meta.env.VITE_SECREAT_KEY;
+export const ORDER_ENCRYPTION_SECREAT_KEY = import.meta.env.REACT_APP_ORDER_ENCRYPTION_SECREAT_KEY || import.meta.env.VITE_ORDER_ENCRYPTION_SECREAT_KEY;
 export const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || import.meta.env.REACT_APP_RAZORPAY_KEY;
