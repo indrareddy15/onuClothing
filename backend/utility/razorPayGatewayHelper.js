@@ -8,16 +8,6 @@ import { sendMainifestMail, sendOrderPlacedMail } from "../controller/emailContr
 import WebSiteModel from "../model/websiteData.model.js";
 import PaymentOrderModel from "../model/PaymentGatway.model.js";
 
-// Log Razorpay credentials for debugging
-console.log("🔐 Razorpay Initialization:");
-console.log("KEY_ID:", process.env.RAZOR_PG_ID ? `${process.env.RAZOR_PG_ID.substring(0, 10)}...` : "NOT SET");
-console.log("KEY_SECRET:", process.env.RAZOR_PG_SECRETE ? "SET" : "NOT SET");
-console.log("NODE_ENV:", process.env.NODE_ENV);
-
-if (!process.env.RAZOR_PG_ID || !process.env.RAZOR_PG_SECRETE) {
-    console.error("❌ CRITICAL: Razorpay credentials are not configured!");
-}
-
 export const instance = new Razorpay({
     key_id: process.env.RAZOR_PG_ID,
     key_secret: process.env.RAZOR_PG_SECRETE,
@@ -30,14 +20,6 @@ export const createOrder = async (req, res) => {
         const { amount, selectedAddress, orderDetails, totalAmount, bagId } = req.body;
 
         // Validate Razorpay credentials
-        if (!process.env.RAZOR_PG_ID || !process.env.RAZOR_PG_SECRETE) {
-            console.error("❌ Razorpay credentials missing in environment");
-            return res.status(500).json({
-                success: false,
-                message: "Server configuration error. Razorpay credentials not set."
-            });
-        }
-
         const options = {
             amount: Number(Math.round(amount) * 100),
             currency: "INR",
