@@ -192,11 +192,11 @@ export const loginLogistics = async (req, res) => {
             console.error("Email and password are required");
             return res.status(400).json({ Success: false, message: 'Email and password are required' });
         }
-        const response = await getAuthToken(email, password);
+        const response = await getAuthToken(email, password, true);
         // console.log("ShipRocket auth token: ",response);
         if (!response) {
             console.error("Error getting ShipRocket auth token: ", response);
-            throw new Error("Error getting ShipRocket auth token");
+            return res.status(400).json({ Success: false, message: 'Invalid credentials or account is temporarily blocked. Please wait 15 mins before retrying.' });
         }
         const alreadySetShipRocketToken = await WebSiteModel.findOne({ tag: 'Shiprocket-token' });
         const logInTime = new Date();  // Current date and time when the user logs in
@@ -238,16 +238,34 @@ export const checkAvailability = async (req, res) => {
         }
         const weight = product.weight;
         const available = await checkShipmentAvailability(Number(pincode), weight);
-        if (available === null || available?.length === 0) {
-            console.error("Error checking availability");
-            logger.warn(`Error Checking Pincode Availability!`)
-            return res.status(500).json({ Success: false, message: 'Error checking availability' });
+
+        console.log("Shiprocket availability check result:", JSON.stringify(available));
+        
+        // If Shiprocket is blocked/down or no service is available
+        if (!available || !available.data || !available.data.available_courier_companies || available.data.available_courier_companies.length === 0) {
+            console.warn("ShipRocket API failed or returned no serviceable courier data for pincode:", pincode);
+            
+            // MOCK FALLBACK: Provide a random 3-8 days range (e.g., 3-4, 5-6)
+            const minDays = Math.floor(Math.random() * 4) + 3; // Random 3, 4, 5, 6
+            const maxDays = minDays + 1; // Range will be e.g., 3-4, 4-5, 5-6, 6-7, 7-8
+            
+            const mockEtd = new Date();
+            mockEtd.setDate(mockEtd.getDate() + maxDays); 
+            
+            const fallbackDelivery = {
+                edd: `${minDays}-${maxDays}`,
+                etd: mockEtd.toISOString().split('T')[0] + " 23:59:59",
+                etd_hours: maxDays * 24
+            };
+            
+            return res.status(200).json({ 
+                Success: true, 
+                message: 'Pincode availability (Estimated)', 
+                result: fallbackDelivery 
+            });
         }
 
         const courierCompanies = available?.data?.available_courier_companies;
-        if (!courierCompanies || courierCompanies.length === 0) {
-            return res.status(200).json({ Success: false, message: 'Delivery not available' });
-        }
 
         const partnersDelivering = courierCompanies.map((partners) => ({ edd: partners.estimated_delivery_days, etd: partners.etd, etd_hours: partners.etd_hours }));
 

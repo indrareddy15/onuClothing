@@ -384,7 +384,21 @@ const Ppage = () => {
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                                 {capitalizeFirstLetterOfEachWord(product.title)}
                             </h1>
-                            <div className="flex items-center gap-2 mb-4">
+                            <div 
+                                className="flex items-center gap-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => {
+                                    // 1. Open the review form
+                                    if(!ratingData) setRatingData({ rating: 5, comment: "" });
+                                    // 2. Switch to reviews tab
+                                    const reviewsTab = document.querySelector('[value="reviews"]');
+                                    if(reviewsTab) reviewsTab.click();
+                                    // 3. Scroll to section
+                                    setTimeout(() => {
+                                        const reviewSection = document.getElementById('reviews-section');
+                                        if(reviewSection) reviewSection.scrollIntoView({ behavior: 'smooth' });
+                                    }, 100);
+                                }}
+                            >
                                 <div className="flex text-yellow-400">
                                     {[...Array(5)].map((_, i) => (
                                         <Star
@@ -393,8 +407,8 @@ const Ppage = () => {
                                         />
                                     ))}
                                 </div>
-                                <span className="text-sm text-gray-600">
-                                    ({product.Rating?.length || 0} reviews)
+                                <span className="text-sm text-gray-600 font-medium">
+                                    {product.averageRating?.toFixed(1) || "0.0"} ({product.Rating?.length || 0} reviews)
                                 </span>
                             </div>
 
@@ -589,10 +603,10 @@ const Ppage = () => {
                             </div>
                         </TabsContent>
 
-                        <TabsContent value="reviews" className="space-y-8">
+                        <TabsContent id="reviews-section" value="reviews" className="space-y-8">
                             <div className="flex justify-between items-center">
                                 <h3 className="text-xl font-semibold">Customer Reviews</h3>
-                                {hasPurchased && !ratingData && (
+                                {!ratingData && (
                                     <Button onClick={() => setRatingData({ rating: 5, comment: "" })}>
                                         Write a Review
                                     </Button>

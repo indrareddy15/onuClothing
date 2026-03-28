@@ -9,28 +9,87 @@ dotenv.config();
 
 
 
-const SHIPROCKET_API_URL = process.env.SHIPROCKET_API_URL;
-const SHIPROCKET_EMAIL = process.env.SHIPROCKET_EMAIL;
-const SHIPROCKET_PASSWORD = process.env.SHIPROCKET_PASSWORD;
+const SHIPROCKET_API_URL = process.env.SHIPROCKET_API_URL || 'https://apiv2.shiprocket.in/v1/external';
+const SHIPROCKET_EMAIL = process.env.SHIPROCKET_EMAIL || '';
+const SHIPROCKET_PASSWORD = process.env.SHIPROCKET_PASSWORD || '';
+
+let tokenRefreshPromise = null;
+let blockTimeout = null;
 
 export const getShipRocketToken = async () => {
-    const alreadySetShipRocketToken = await WebSiteModel.findOne({ tag: 'Shiprocket-token' });
-    if (alreadySetShipRocketToken) {
-        return alreadySetShipRocketToken.ShiprocketToken.token;
+    // If we are globally blocked temporarily (cooldown), bail out early
+    if (blockTimeout && Date.now() < blockTimeout) {
+        console.warn("Shiprocket login is in cooldown period due to recent block.");
+        const fallback = await WebSiteModel.findOne({ tag: 'Shiprocket-token' });
+        return fallback?.ShiprocketToken?.token || null;
     }
-    return null;
+
+    const alreadySetShipRocketToken = await WebSiteModel.findOne({ tag: 'Shiprocket-token' });
+    if (alreadySetShipRocketToken && alreadySetShipRocketToken.ShiprocketToken) {
+        const { token, expiringTime } = alreadySetShipRocketToken.ShiprocketToken;
+
+        // Check if the token is expired or will expire within 1 day
+        if (expiringTime) {
+            const now = new Date();
+            const expiry = new Date(expiringTime);
+            const oneDayMs = 24 * 60 * 60 * 1000;
+
+            if (now.getTime() >= (expiry.getTime() - oneDayMs)) {
+                console.log("Shiprocket token expired or expiring soon, auto-refreshing...");
+
+                // Prevent thundering herd problem
+                if (!tokenRefreshPromise) {
+                    tokenRefreshPromise = refreshAndSaveShipRocketToken().finally(() => {
+                        tokenRefreshPromise = null;
+                    });
+                }
+                const newToken = await tokenRefreshPromise;
+
+                if (newToken) return newToken;
+
+                // If refresh failed, still try the old token as a fallback
+                console.warn("Token refresh failed, using possibly expired token as fallback");
+            }
+        }
+
+        return token;
+    }
+
+    // No token exists at all — try to create one
+    console.log("No Shiprocket token found, attempting initial login...");
+    if (!tokenRefreshPromise) {
+        tokenRefreshPromise = refreshAndSaveShipRocketToken().finally(() => {
+            tokenRefreshPromise = null;
+        });
+    }
+    const newToken = await tokenRefreshPromise;
+    return newToken;
 }
-export const getAuthToken = async (email, password) => {
+export const getAuthToken = async (email, password, force = false) => {
+    if (!force && blockTimeout && Date.now() < blockTimeout) {
+        console.warn('Skipping Auth Token fetch because Shiprocket user is in cooldown period.');
+        return null;
+    }
+
     try {
         const response = await axios.post(`${SHIPROCKET_API_URL}/auth/login`, {
-            email: email || SHIPROCKET_EMAIL,
-            password: password || SHIPROCKET_PASSWORD
+            email: email || (process.env.SHIPROCKET_EMAIL || '').trim(),
+            password: password || (process.env.SHIPROCKET_PASSWORD || '').trim()
         });
         // console.log("ShipRocket auth token: ",response?.data);
+        // Clear cooldown if successful
+        blockTimeout = null;
         return response?.data?.token;
     } catch (error) {
-        console.error('Error fetching auth token:', error);
-        return '';
+        console.error('Error fetching auth token:', error?.message || error);
+        if (error?.response?.data) {
+            console.error('Auth token error details:', error.response.data);
+            if (error.response.status === 403) {
+                console.warn('Shiprocket user blocked. Setting cooldown for 15 minutes.');
+                blockTimeout = Date.now() + 15 * 60 * 1000;
+            }
+        }
+        return null;
     }
 };
 
@@ -920,8 +979,7 @@ export const getShipmentOrderByOrderId = async (order) => {
         console.log("Shipment order Tracking: ", res.data?.tracking_data?.shipment_track_activities);
         return res.data;
     } catch (error) {
-        console.error("Error getting Shipment Order by ID: ", error?.response?.data);
-        console.error("Error getting Shipment Order by ID: ", error);
+        console.error("Error getting Shipment Order by ID: ", error?.response?.data?.message || error?.message || "Unknown error");
         return null;
     }
 }
@@ -1034,6 +1092,7 @@ export const checkShipmentAvailability = async (delivary_pin, weight) => {
             });
             return res.data;
         } catch (error) {
+            console.error("Shiprocket serviceability API Error:", error.response?.status, JSON.stringify(error.response?.data || error.message));
             if (error.response && error.response.status === 401) {
                 console.log("401 Unauthorized in checkShipmentAvailability, refreshing token...");
                 token = await refreshAndSaveShipRocketToken();
@@ -1051,7 +1110,7 @@ export const checkShipmentAvailability = async (delivary_pin, weight) => {
         }
 
     } catch (error) {
-        console.error("Error Checking Pincode.: ", error?.message || error)
+        console.error("Error Checking Pincode details:", error.response?.data || error?.message || error)
         return null;
     }
 }

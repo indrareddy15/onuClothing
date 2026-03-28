@@ -1915,15 +1915,70 @@ export const exchangeOrder = async (req, res) => {
 
 export const tryCreatePickupResponse = async (req, res) => {
     try {
-        const { orderId, BestCourior, ShipmentCreatedResponseData } = req.body;
-        const order = await OrderModel.findById(orderId);
+        const { orderId } = req.body;
+        if (!orderId) return res.status(400).json({ success: false, message: "Order ID is required" });
+
+        // Populate productId so we have the product details needed to create the Shiprocket order if it's missing
+        const order = await OrderModel.findById(orderId).populate('orderItems.productId');
         if (!order) return res.status(404).json({ success: false, message: "Order not found" });
-        const pickupRequest = await generateOrderPicketUpRequest(order, ShipmentCreatedResponseData, BestCourior);
-        console.log("Created Pickup Request: ", pickupRequest);
-        if (!pickupRequest) {
-            return res.status(400).json({ success: false, message: "Failed to create pickup request", result: null });
+
+        // Read ShipmentCreatedResponseData and BestCourior from the DB order document
+        let shipmentData = req.body.ShipmentCreatedResponseData || order.ShipmentCreatedResponseData;
+        let bestCourier = req.body.BestCourior || order.BestCourior;
+        let pickupRequest = null;
+
+        if (!shipmentData || !shipmentData.shipment_id) {
+            console.log("No shipment data found in order, creating Shiprocket shipment now...");
+            // Generate the shipment data since it was bypassed during checkout
+            const randomShipmentId = Math.floor(10000000 + Math.random() * 90000000);
+
+            const createdShipRocketOrder = await generateOrderForShipment(order.userId, {
+                orderItems: order.orderItems,
+                address: order.address,
+                TotalAmount: order.TotalAmount,
+                paymentMode: order.paymentMode,
+                status: order.status,
+                razorpay_order_id: order.razorpay_order_id,
+                ConveenianceFees: order.ConveenianceFees,
+            }, order.order_id, order.shipment_id || randomShipmentId);
+
+            if (!createdShipRocketOrder || !createdShipRocketOrder.shipmentCreatedResponseData) {
+                return res.status(400).json({ success: false, message: "Failed to create ShipRocket shipment. Please check Shiprocket account/token status." });
+            }
+
+            shipmentData = createdShipRocketOrder.shipmentCreatedResponseData;
+            bestCourier = createdShipRocketOrder.bestCourier;
+            pickupRequest = createdShipRocketOrder.PickupData;
+
+            // Save the newly generated shipment data to the order
+            order.ShipmentCreatedResponseData = shipmentData;
+            order.BestCourior = bestCourier;
+            order.manifest = createdShipRocketOrder.manifest;
+            order.picketUpLoactionWareHouseName = createdShipRocketOrder.warehouse_name;
+            order.shipment_id = shipmentData.shipment_id;
+            order.PicketUpData = pickupRequest || null;
+            await order.save();
+
+            // If the pickup was successfully generated as part of generateOrderForShipment, we can return early
+            if (pickupRequest) {
+                return res.status(200).json({ success: true, message: 'Successfully created shipment and pickup request', result: order });
+            }
         }
-        res.status(200).json({ success: true, message: 'Successfully created a new pickup' })
+
+        if (!pickupRequest) {
+            console.log("Generating pickup request for shipment...");
+            pickupRequest = await generateOrderPicketUpRequest(order, shipmentData, bestCourier);
+            console.log("Created Pickup Request: ", pickupRequest);
+            if (!pickupRequest) {
+                return res.status(400).json({ success: false, message: "Failed to create pickup request", result: null });
+            }
+        }
+
+        // Save pickup data to the order
+        order.PicketUpData = pickupRequest;
+        await order.save();
+
+        res.status(200).json({ success: true, message: 'Successfully created a new pickup', result: order })
 
     } catch (error) {
         console.error("Error occured during creating pickup request", error);

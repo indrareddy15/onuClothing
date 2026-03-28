@@ -107,10 +107,13 @@ const AdminOrdersDetailsView = ({ order: initialOrder }) => {
         ShipmentCreatedResponseData: order?.ShipmentCreatedResponseData,
       })
     );
-    if (response.payload?.error) {
-      checkAndCreateToast("error", response.payload?.error);
+    if (response.meta?.requestStatus === "rejected") {
+      checkAndCreateToast("error", response.payload?.error || "Failed to create pickup response");
+    } else if (response.payload?.success) {
+      checkAndCreateToast("success", response.payload?.message || "Successfully created response");
+      dispatch(adminGetAllOrders());
     } else {
-      checkAndCreateToast("success", "Successfully created response");
+      checkAndCreateToast("error", response.payload?.message || "Failed to create pickup response");
     }
     handleFetchOrderDetails(order?._id);
   };

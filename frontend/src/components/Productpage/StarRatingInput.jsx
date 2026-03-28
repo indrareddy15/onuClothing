@@ -2,37 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 
 const StarRatingInput = ({ onChangeValue, value = 0 }) => {
-    const [rating, setRating] = useState(value);
     const [hover, setHover] = useState(0);
 
-    useEffect(() => {
-        setRating(value);
-    }, [value]);
-
-    const handleStarClick = (val) => {
-        setRating(val);
-        onChangeValue(val);
-    };
-
     return (
-        <div className="flex gap-1">
+        <div className="flex gap-2 items-center">
             {[1, 2, 3, 4, 5].map((star) => (
-                <button
+                <div
                     key={star}
-                    type="button"
-                    className="transition-transform hover:scale-110 focus:outline-none"
-                    onClick={() => handleStarClick(star)}
+                    className="cursor-pointer transition-transform hover:scale-125 active:scale-95 p-1"
+                    onClick={() => onChangeValue(star)}
                     onMouseEnter={() => setHover(star)}
                     onMouseLeave={() => setHover(0)}
                 >
                     <Star
-                        className={`w-8 h-8 ${star <= (hover || rating)
+                        size={32}
+                        className={`transition-colors duration-200 ${
+                            star <= (hover || value)
                                 ? "fill-yellow-400 text-yellow-400"
                                 : "text-gray-300"
-                            }`}
+                        }`}
                     />
-                </button>
+                </div>
             ))}
+            <span className="ml-2 text-sm font-bold text-gray-500">({value}/5)</span>
         </div>
     );
 };

@@ -120,13 +120,13 @@ export const adminUpdateUsersOrdersById = createAsyncThunk('/orders/adminUpdateU
         console.error(`Error adminUpdateUsersOrdersById orders: `,error);
     }
 })
-export const adminRequestTryPickUp = createAsyncThunk('/admin/orders/tryPickUp',async(data)=>{
+export const adminRequestTryPickUp = createAsyncThunk('/admin/orders/tryPickUp',async(data, { rejectWithValue })=>{
 	try {
         const response = await axios.post(`${BASE_URL}/admin/orders/tryPickUp`,data,Header());
         return response.data;
     } catch (error) {
         console.error(`Error trying pickup order: `,error);
-		return {error: error.response.data.message};
+		return rejectWithValue({ error: error.response?.data?.message || "Failed to create pickup request" });
     }
 })
 export const adminSendOrderCancel = ({orderId}) => async () => {

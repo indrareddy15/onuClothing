@@ -340,7 +340,18 @@ const MPpage = () => {
 					<h1 className="text-2xl font-bold text-gray-900 leading-tight">
 						{capitalizeFirstLetterOfEachWord(product.title)}
 					</h1>
-					<div className="flex items-center gap-2">
+					<div 
+						className="flex items-center gap-2 cursor-pointer active:opacity-70 transition-opacity"
+						onClick={() => {
+							// 1. Open review form
+							if(!ratingData) setRatingData({ rating: 5, comment: "" });
+							// 2. Scroll to section
+							setTimeout(() => {
+								const reviewSection = document.getElementById('reviews-section');
+								if(reviewSection) reviewSection.scrollIntoView({ behavior: 'smooth' });
+							}, 100);
+						}}
+					>
 						<div className="flex text-yellow-400">
 							{[...Array(5)].map((_, i) => (
 								<Star
@@ -349,7 +360,9 @@ const MPpage = () => {
 								/>
 							))}
 						</div>
-						<span className="text-sm text-gray-600">({product.Rating?.length || 0} reviews)</span>
+						<span className="text-sm text-gray-600 font-medium">
+							{product.averageRating?.toFixed(1) || "0.0"} ({product.Rating?.length || 0} reviews)
+						</span>
 					</div>
 				</div>
 
@@ -477,10 +490,10 @@ const MPpage = () => {
 				</div>
 
 				{/* Reviews */}
-				<div className="space-y-6 pt-6">
+				<div id="reviews-section" className="space-y-6 pt-6">
 					<div className="flex justify-between items-center">
 						<h3 className="font-semibold text-lg">Reviews</h3>
-						{hasPurchased && !ratingData && (
+						{!ratingData && (
 							<Button variant="outline" size="sm" onClick={() => setRatingData({ rating: 5, comment: "" })}>
 								Write Review
 							</Button>
