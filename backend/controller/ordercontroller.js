@@ -80,11 +80,13 @@ export const verifyPayment = async (req, res) => {
                 const orderData = new OrderModel({
                     userId: req.user.id,
                     orderItems: orderDetails,
-                    address: addressString,
+                    address: SelectedAddress, // Save complete address object for logistics
+                    order_id: paymentData.order_id, // Save the consistent order_id generated
                     ConveenianceFees: alreadyPresentConvenenceFees?.ConvenienceFees || 0,
                     TotalAmount: totalAmount,
                     paymentMode: paymentStatus[0].payment_group,
                     status: 'Order Confirmed',
+                    razorpay_order_id: paymentData.order_id, // Store for compatibility if needed
                 });
 
                 await orderData.save();
@@ -1937,10 +1939,10 @@ export const tryCreatePickupResponse = async (req, res) => {
                 address: order.address,
                 TotalAmount: order.TotalAmount,
                 paymentMode: order.paymentMode,
-                status: order.status,
+                Status: order.status,
                 razorpay_order_id: order.razorpay_order_id,
                 ConveenianceFees: order.ConveenianceFees,
-            }, order.order_id, order.shipment_id || randomShipmentId);
+            }, order.order_id || String(order._id), order.shipment_id || randomShipmentId);
 
             if (!createdShipRocketOrder || !createdShipRocketOrder.shipmentCreatedResponseData) {
                 return res.status(400).json({ success: false, message: "Failed to create ShipRocket shipment. Please check Shiprocket account/token status." });

@@ -398,8 +398,8 @@ const formatDate = (date) => {
             channel_id: '6282866',
             category: "Clothes",
             billing_isd_code: "+91",
-            billing_customer_name: shipmentData.address.Firstname,
-            billing_last_name: shipmentData.address.Lastname,
+            billing_customer_name: shipmentData.address.Firstname || (shipmentData.address.name ? shipmentData.address.name.split(' ')[0] : 'Customer'),
+            billing_last_name: shipmentData.address.Lastname || (shipmentData.address.name ? (shipmentData.address.name.split(' ').slice(1).join(' ') || '.') : '.'),
             billing_address: shipmentData.address.address1,
             billing_city: shipmentData.address.address2,
             billing_pincode: shipmentData.address.pincode,
@@ -476,122 +476,148 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
     try {
         // Fetch token if it's missing
         const token = await getShipRocketToken();
+        if (!token) {
+            console.error("Critical: Shiprocket token is missing or could not be fetched.");
+            return null;
+        }
 
         // Fetch user data
         const userData = await User.findById(userId);
         if (!userData) {
-            console.error("User not found");
+            console.error("User not found for ID:", userId);
             return null;
         }
 
-        // Helper function to calculate totals for order items
-        const calculateTotal = (key) => shipmentData.orderItems.reduce((total, item) => total + item.productId[key], 0);
+        // Ensure address is an object. Some older orders might have it as a string
+        let address = shipmentData.address;
+        if (typeof address === 'string') {
+            try {
+                // Try parsing if it's JSON string, otherwise handle as a flattened string list
+                address = JSON.parse(address);
+            } catch (e) {
+                console.warn("Order address is a non-JSON string. Shiprocket creation will likely fail validation.");
+                // We'll proceed but it will probably hit the error logs below with missing fields.
+                // You might want to consider a better parsing logic if the format is consistent (e.g. comma separated)
+            }
+        }
+
+        if (!address || typeof address !== 'object') {
+            console.error("Critical: Order address is missing or invalid type:", typeof address);
+            return null;
+        }
+
+        // Helper function to calculate totals for order items safely
+        const calculateTotal = (key) => (shipmentData.orderItems || []).reduce((total, item) => {
+            const val = item?.productId?.[key] || 0;
+            return total + (typeof val === 'number' ? val : 0);
+        }, 0);
 
         // Calculate various totals
-        const [subTotal, totalOrderWeight, totalOrderHeight, totalOrderLength, totalBredth] = await Promise.all([
-            calculateTotal('price'),
-            calculateTotal('weight'),
-            calculateTotal('height'),
-            calculateTotal('length'),
-            calculateTotal('breadth')
-        ]);
+        const subTotal = calculateTotal('price');
+        const totalOrderWeight = calculateTotal('weight');
+        const totalOrderHeight = calculateTotal('height');
+        const totalOrderLength = calculateTotal('length');
+        const totalBredth = calculateTotal('breadth');
 
         // Generate random ID for HSN and SKU if needed
         const generateRandomId = () => Math.floor(10000000 + Math.random() * 90000000);
 
-        console.log("Order Items: ", shipmentData.orderItems);
-
-        // Map order items to required format
-        const orderItems = shipmentData.orderItems.map(item => ({
-            name: item?.productId?.title,
-            selling_price: item.productId.salePrice || item.productId.price,
-            units: item.quantity,
-            discount: item?.productId?.DiscountedPercentage || 0,
-            color: item?.color.name,
-            size: item?.size?.label,
-            sku: item?.color?.sku,
-            tax: item?.productId?.gst || 0,
-            hsn: item?.productId?.hsn || generateRandomId().toString()
+        // Map order items to required format safely
+        const mappedOrderItems = (shipmentData.orderItems || []).map(item => ({
+            name: (item?.productId?.title || 'Unknown Product').substring(0, 100).trim(),
+            selling_price: Number(item?.productId?.salePrice || item?.productId?.price || 0),
+            units: Number(item?.quantity || 1),
+            discount: Number(item?.productId?.DiscountedPercentage || 0),
+            color: item?.color?.name || (item?.color?.label ? item?.color?.label : 'N/A'),
+            size: item?.size?.label || (item?.size?.name ? item?.size?.name : 'N/A'),
+            sku: String(item?.color?.sku || item?.productId?.sku || item?.productId?._id).substring(0, 50),
+            tax: Number(item?.productId?.gst || 0),
+            hsn: String(item?.productId?.hsn || generateRandomId()).substring(0, 20)
         }));
+
+        if (mappedOrderItems.length === 0) {
+            console.error("No valid items to ship in the order.");
+            return null;
+        }
 
         // Get available pickup locations
         const pickup_locations = await getPickUpLocation();
-        const primaryLocation = pickup_locations.find(loc => loc.is_primary_location);
-        if (!primaryLocation) {
-            console.error("Primary pickup location not found");
-            return null; // Avoid proceeding if primary location is not found
+        if (!pickup_locations || pickup_locations.length === 0) {
+            console.error("No pickup locations found on Shiprocket account.");
+            return null;
         }
 
-        console.log("Shipment Address:", shipmentData.address);
+        const primaryLocation = pickup_locations.find(loc => loc.is_primary_location) || pickup_locations[0];
+        if (!primaryLocation) {
+            console.error("Primary pickup location not found and no other location available.");
+            return null;
+        }
+
         const alternatePhoneOriginal = userData?.phoneNumber;
-        const alternatePhoneWith10Digit = alternatePhoneOriginal ? alternatePhoneOriginal.replace(/\D/g, '').slice(0, 10) : '';
-        console.log("Alternate Phone:", alternatePhoneOriginal)
-        // Prepare order details
+        const alternatePhoneWith10Digit = alternatePhoneOriginal ? alternatePhoneOriginal.replace(/\D/g, '').slice(-10) : '';
+
+        // Prepare order details with improved validation for common Shiprocket 400 errors
         const orderDetails = {
-            order_id: randomOrderId,
-            shipment_id: randomShipmentId,
-            order_date: formatDate(new Date()), // Ensure formatDate is defined
+            order_id: String(randomOrderId),
+            shipment_id: randomShipmentId ? Number(randomShipmentId) : null,
+            order_date: formatDate(new Date()),
             pickup_location: primaryLocation?.pickup_location,
-            reseller_name: primaryLocation?.pickup_location,
-            company_name: primaryLocation?.pickup_location,
+            reseller_name: "",
+            company_name: (primaryLocation?.pickup_location || "On U").substring(0, 100),
             channel_id: '6282866',
             category: "Clothes",
             billing_isd_code: "+91",
-            billing_customer_name: shipmentData.address.Firstname || shipmentData.address.FirstName,
-            billing_last_name: shipmentData.address.Lastname,
-            billing_address: shipmentData.address.address1,
-            billing_city: shipmentData.address.address2,
-            billing_pincode: shipmentData.address.pincode,
-            billing_state: shipmentData.address.state,
-            units: orderItems.length,
-            billing_country: 'In',
-            billing_phone: shipmentData.address.phoneNumber,
+            billing_customer_name: (address.Firstname || address.FirstName || address.name || 'Customer').substring(0, 50).trim(),
+            billing_last_name: (address.Lastname || (address.name && address.name.includes(' ') ? address.name.split(' ').slice(1).join(' ') : '.')).substring(0, 50).trim(),
+            billing_address: (address.address1 || "Address").substring(0, 200),
+            billing_city: (address.address2 || address.city || "City").split(',')[0].trim().substring(0, 50),
+            billing_pincode: String(address.pincode).replace(/\D/g, '').slice(0, 6),
+            billing_state: (address.state || "State").substring(0, 50),
+            units: mappedOrderItems.length,
+            billing_country: 'India',
+            billing_phone: String(address.phoneNumber || '').replace(/\D/g, '').slice(-10),
             billing_alternate_phone: alternatePhoneWith10Digit,
             shipping_is_billing: true,
-            order_items: orderItems,
-            payment_method: shipmentData?.paymentMode,
-            sub_total: subTotal,
-            length: totalOrderLength,
-            breadth: totalBredth,
-            height: totalOrderHeight,
-            weight: totalOrderWeight / 1000, // Convert weight to KG
-            order_type: 'NON ESSENTIALS',
-            hsn: '441122', // Static HSN, but can be dynamically generated based on your needs
+            order_items: mappedOrderItems,
+            payment_method: shipmentData?.paymentMode?.toLowerCase() === 'cod' ? 'COD' : 'Prepaid',
+            sub_total: Number(subTotal),
+            length: totalOrderLength > 0.5 ? Number(totalOrderLength) : 1,
+            breadth: totalBredth > 0.5 ? Number(totalBredth) : 1,
+            height: totalOrderHeight > 0.5 ? Number(totalOrderHeight) : 1,
+            weight: totalOrderWeight > 10 ? Number(totalOrderWeight / 1000) : 0.5,
+            order_type: 'NON ESSENTIALS'
         };
 
         // Send the request to ShipRocket API
         const response = await axios.post(`${SHIPROCKET_API_URL}/orders/create/adhoc`, orderDetails, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` }
         });
 
-        console.log("Shipment Created Response: ", response.data);
+        console.log("Shipment Created Response Success:", response.data?.order_id);
 
         // Fetch available couriers and generate invoice in parallel
         const [allAvailableCourier, invoice] = await Promise.all([
             getAllServicalibiltyties({
                 pickup_postcode: primaryLocation?.pin_code,
-                delivery_postcode: shipmentData.address.pincode,
+                delivery_postcode: address.pincode,
                 order_id: response?.data?.order_id,
             }),
             generateInvoice(response.data)
         ]);
-        const shiprocket_recommended_courier_id = allAvailableCourier.shiprocket_recommended_courier_id;
-        console.log("All Available Courier: ", allAvailableCourier?.available_courier_companies.find(courier_id => courier_id.courier_company_id === shiprocket_recommended_courier_id));
 
         // Get the best courier based on available options
         let bestCourier = null;
-        if (allAvailableCourier && allAvailableCourier.available_courier_companies.length > 0) {
-            bestCourier = getBestCourierPartners(allAvailableCourier?.available_courier_companies)[0]
+        if (allAvailableCourier && Array.isArray(allAvailableCourier.available_courier_companies) && allAvailableCourier.available_courier_companies.length > 0) {
+            const shiprocket_recommended_courier_id = allAvailableCourier.shiprocket_recommended_courier_id;
+            bestCourier = allAvailableCourier.available_courier_companies.find(c => c.courier_company_id === shiprocket_recommended_courier_id) ||
+                getBestCourierPartners(allAvailableCourier.available_courier_companies)[0] ||
+                allAvailableCourier.available_courier_companies[0];
         }
-        if (!bestCourier) {
-            console.error("No suitable courier found");
-        }
-        bestCourier = allAvailableCourier?.available_courier_companies.find(courier_id => courier_id.courier_company_id === shiprocket_recommended_courier_id);
+
+        let createPickUpResponse = null;
         if (bestCourier) {
             // Create pickup request with the best courier
-            const createPickUpResponse = await generateOrderPicketUpRequest(null, {
+            createPickUpResponse = await generateOrderPicketUpRequest(null, {
                 order_id: response?.data?.order_id,
                 shipment_id: response?.data?.shipment_id,
                 status: response?.data?.status,
@@ -599,26 +625,32 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
                 onboarding_completed_now: response?.data?.onboarding_completed_now,
                 courier_company_id: bestCourier?.courier_company_id
             }, bestCourier);
-
-            return {
-                shipmentCreatedResponseData: response.data,
-                bestCourier,
-                manifest: invoice,
-                warehouse_name: primaryLocation,
-                PickupData: createPickUpResponse
-            };
-        } else {
-            return {
-                shipmentCreatedResponseData: response.data,
-                bestCourier: null,
-                manifest: invoice,
-                warehouse_name: primaryLocation,
-                PickupData: null
-            };
         }
 
+        return {
+            shipmentCreatedResponseData: response.data,
+            bestCourier,
+            manifest: invoice,
+            warehouse_name: primaryLocation,
+            PickupData: createPickUpResponse
+        };
+
     } catch (error) {
-        console.error("Error creating order:", error?.response?.data || error.message);
+        console.error("Error creating Shiprocket order:");
+        if (error.response) {
+            console.error("Shiprocket API Response Error (Wait, did you check the token?):", error.response.status);
+            console.dir(error.response.data, { depth: null });
+            logger.error(`Shiprocket API error: ${JSON.stringify(error.response.data)}`);
+
+            // Special handling for 401/403 which might indicate token issues
+            if (error.response.status === 401 || error.response.status === 403) {
+                console.warn("Token might be invalid or account blocked. Forcing token refresh for next time.");
+                await refreshAndSaveShipRocketToken();
+            }
+        } else {
+            console.error("Communication error with Shiprocket:", error.message);
+            logger.error(`Shiprocket communication error: ${error.message}`);
+        }
         return null;
     }
 };
