@@ -13,6 +13,37 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 
+const STORE_LOCATIONS = [
+  {
+    name: "ON U - Aundh (Headquarter)",
+    address:
+      "Shop No. 5/6, Disha Apartments, Sr No. 148/150/151, Plot No. 17, Sanghvi Kesari Road, Pune - 411067",
+    mapLink:
+      "https://www.google.com/maps/search/?api=1&query=ON+U+Disha+Apartments+Sanghvi+Kesari+Road+Pune+411067",
+  },
+  {
+    name: "ON U - Kothrud",
+    address:
+      "Shop 1, PMT Bus Depot, Dahanukar Colony, Kothrud, Pune - 411038",
+    mapLink:
+      "https://www.google.com/maps/search/?api=1&query=ON+U+Kothrud+PMT+Bus+Depot+Dahanukar+Colony+Pune+411038",
+  },
+  {
+    name: "ON U - Salunke Vihar",
+    address:
+      "Shop No. 14, Girme Heights Building, Plot A, Salunke Vihar Road, Wanowrie, Pune - 411048",
+    mapLink:
+      "https://www.google.com/maps/search/?api=1&query=ON+U+Salunke+Vihar+Wanowrie+Pune+411048",
+  },
+  {
+    name: "ON U - Latur",
+    address:
+      "Gandhi Market, Sawe Wadi, Latur, Maharashtra - 413512",
+    mapLink:
+      "https://www.google.com/maps/search/?api=1&query=ON+U+Gandhi+Market+Latur+413512",
+  },
+];
+
 const Footer = () => {
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
@@ -282,24 +313,22 @@ const Footer = () => {
 								</div>
 
 								<div className="space-y-3 pt-2 border-t border-gray-100">
-									<h3 className="text-sm font-bold tracking-wider text-gray-900 uppercase">Info</h3>
-									<ul className="space-y-2 text-xs text-gray-500">
-										<li><span className="font-semibold text-gray-700">Owner:</span> On U</li>
-										<li>
-											<a
-												href="https://www.google.com/maps/search/?api=1&query=ON+U,+Shop+No.+14,+S,+Girme+Height+Building,+Plot+A,+Salunke+Vihar+Rd,+Wanowrie,+Pune+-+411040"
-												target="_blank"
-												rel="noopener noreferrer"
-												className="flex items-center gap-1 font-bold text-blue-600 hover:underline"
-											>
-												GET DIRECTION <ArrowRight className="w-3 h-3" />
-											</a>
-										</li>
-										<li><span className="font-semibold text-gray-700">Company:</span> On U</li>
-										<li>
-											<span className="font-semibold text-gray-700">Address:</span><br />
-											ON U, Shop No. 14, S, Girme Height Building, Plot A, Salunke Vihar Rd, Wanowrie, Pune - 411040
-										</li>
+									<h3 className="text-sm font-bold tracking-wider text-gray-900 uppercase">Our Stores</h3>
+									<ul className="space-y-4 text-xs text-gray-500">
+										{STORE_LOCATIONS.map((store, index) => (
+											<li key={index}>
+												<p className="font-bold text-gray-900 mb-1">{store.name}</p>
+												<p className="leading-relaxed mb-1">{store.address}</p>
+												<a
+													href={store.mapLink}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase"
+												>
+													Directions <ArrowRight className="w-3 h-3" />
+												</a>
+											</li>
+										))}
 									</ul>
 								</div>
 							</div>

@@ -39,15 +39,15 @@ const CategoryExplorerSection = ({ categories }) => {
                 className="group relative flex flex-col items-center"
                 onMouseEnter={() => setActiveCategory(index)}
               >
-                {/* Category Image */}
+                {/* Category Image Container */}
                 <div
                   className={`
-                                    relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-2xl md:rounded-3xl overflow-hidden 
+                                    relative w-full aspect-square overflow-hidden 
                                     backdrop-blur-md bg-white/40 border-2 border-white/30 
-                                    transition-all duration-500 group-hover:scale-110 group-hover:shadow-2xl
+                                    transition-all duration-500 group-hover:scale-[1.02] group-hover:shadow-2xl
                                     ${
                                       activeCategory === index
-                                        ? "scale-110 shadow-2xl border-black/20"
+                                        ? "scale-[1.02] shadow-2xl border-black/20"
                                         : ""
                                     }
                                 `}
@@ -58,24 +58,22 @@ const CategoryExplorerSection = ({ categories }) => {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
 
-                  {/* Overlay */}
-                  <div
-                    className={`
-                                        absolute inset-0 bg-gradient-to-t from-black/30 to-transparent 
-                                        transition-opacity duration-300
-                                        ${
-                                          activeCategory === index
-                                            ? "opacity-100"
-                                            : "opacity-0 group-hover:opacity-100"
-                                        }
-                                    `}
-                  />
+                  {/* Gradient Overlay for Text Readability */}
+                  <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300" />
+
+                  {/* Category Name Overlay (Mobile Style) */}
+                  <div className="absolute inset-0 flex flex-col justify-end p-3 md:hidden">
+                    <span className="text-white text-xs font-black uppercase tracking-tighter leading-none mb-1">
+                      {category.name}
+                    </span>
+                    <div className="w-6 h-0.5 bg-white rounded-full" />
+                  </div>
 
                   {/* Hover Arrow */}
                   <div
                     className={`
-                                        absolute bottom-2 right-2 w-6 h-6 rounded-full bg-white/80 backdrop-blur-sm
-                                        flex items-center justify-center transition-all duration-300
+                                        absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm
+                                        flex items-center justify-center transition-all duration-300 shadow-lg
                                         ${
                                           activeCategory === index
                                             ? "scale-100 opacity-100"
@@ -83,12 +81,12 @@ const CategoryExplorerSection = ({ categories }) => {
                                         }
                                     `}
                   >
-                    <ArrowRight size={12} className="text-gray-900" />
+                    <ArrowRight size={14} className="text-gray-900" />
                   </div>
                 </div>
 
-                {/* Category Name */}
-                <div className="mt-4 text-center">
+                {/* Desktop Category Name (Hidden on Mobile) */}
+                <div className="hidden md:block mt-4 text-center">
                   <span
                     className={`
                                         text-sm md:text-base font-bold uppercase tracking-wide 
@@ -102,20 +100,19 @@ const CategoryExplorerSection = ({ categories }) => {
                   >
                     {category.name}
                   </span>
+                  {/* Animated underline */}
+                  <div
+                    className={`
+                                      mt-1 h-0.5 bg-gradient-to-r from-gray-900 to-gray-600 
+                                      transition-all duration-500 mx-auto
+                                      ${
+                                        activeCategory === index
+                                          ? "w-full opacity-100"
+                                          : "w-0 opacity-0 group-hover:w-full group-hover:opacity-100"
+                                      }
+                                  `}
+                  />
                 </div>
-
-                {/* Animated underline */}
-                <div
-                  className={`
-                                    mt-1 h-0.5 bg-gradient-to-r from-gray-900 to-gray-600 
-                                    transition-all duration-500 origin-center
-                                    ${
-                                      activeCategory === index
-                                        ? "w-full opacity-100"
-                                        : "w-0 opacity-0 group-hover:w-full group-hover:opacity-100"
-                                    }
-                                `}
-                />
               </Link>
             ))}
           </div>
