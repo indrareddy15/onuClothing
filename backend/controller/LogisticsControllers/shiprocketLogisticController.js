@@ -569,6 +569,9 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
         const alternatePhoneWith10Digit = alternatePhoneOriginal ? alternatePhoneOriginal.replace(/\D/g, '').slice(-10) : '';
 
         // Prepare order details with improved validation for common Shiprocket 400 errors
+        const netProductPrice = mrpTotal - totalDiscount;
+        const shippingCharges = (shipmentData.TotalAmount || 0) > netProductPrice ? (shipmentData.TotalAmount - netProductPrice) : 0;
+
         const orderDetails = {
             order_id: String(randomOrderId),
             shipment_id: randomShipmentId ? Number(randomShipmentId) : null,
@@ -585,7 +588,7 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
             billing_city: (address.address2 || address.city || "City").split(',')[0].trim().substring(0, 50),
             billing_pincode: String(address.pincode).replace(/\D/g, '').slice(0, 6),
             billing_state: (address.state || "State").substring(0, 50),
-            units: mappedOrderItems.length,
+            units: orderItems.length,
             billing_country: 'India',
             billing_phone: String(address.phoneNumber || '').replace(/\D/g, '').slice(-10),
             billing_alternate_phone: alternatePhoneWith10Digit,
@@ -594,6 +597,7 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
             payment_method: shipmentData?.paymentMode,
             sub_total: mrpTotal,
             total_discount: totalDiscount,
+            shipping_charges: shippingCharges,
             length: totalOrderLength,
             breadth: totalBredth,
             height: totalOrderHeight,
