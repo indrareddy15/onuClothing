@@ -426,10 +426,10 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
         }
 
         // Helper function to calculate totals for order items
-        const calculateTotal = (key) => shipmentData.orderItems.reduce((total, item) => total + item.productId[key], 0);
+        const calculateTotal = (key) => shipmentData.orderItems.reduce((total, item) => total + (item.productId[key] || 0) * (item.quantity || 1), 0);
 
         // Calculate various totals
-        const [subTotal, totalOrderWeight, totalOrderHeight, totalOrderLength, totalBredth] = await Promise.all([
+        const [mrpTotal, totalOrderWeight, totalOrderHeight, totalOrderLength, totalBredth] = await Promise.all([
             calculateTotal('price'),
             calculateTotal('weight'),
             calculateTotal('height'),
@@ -437,23 +437,36 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
             calculateTotal('breadth')
         ]);
 
+        // Calculate total discount
+        const totalDiscount = shipmentData.orderItems.reduce((total, item) => {
+            const mrp = item.productId.price || 0;
+            const salePrice = item.productId.salePrice && item.productId.salePrice > 0 ? item.productId.salePrice : mrp;
+            return total + (mrp - salePrice) * (item.quantity || 1);
+        }, 0);
+
         // Generate random ID for HSN and SKU if needed
         const generateRandomId = () => Math.floor(10000000 + Math.random() * 90000000);
 
         console.log("Order Items: ", shipmentData.orderItems);
 
         // Map order items to required format
-        const orderItems = shipmentData.orderItems.map(item => ({
-            name: item?.productId?.title,
-            selling_price: item.productId.salePrice || item.productId.price,
-            units: item.quantity,
-            discount: item?.productId?.DiscountedPercentage || 0,
-            color: item?.color.name,
-            size: item?.size?.label,
-            sku: item?.color?.sku,
-            tax: item?.productId?.gst || 0,
-            hsn: item?.productId?.hsn || generateRandomId().toString()
-        }));
+        const orderItems = shipmentData.orderItems.map(item => {
+            const mrp = item.productId.price || 0;
+            const salePrice = item.productId.salePrice && item.productId.salePrice > 0 ? item.productId.salePrice : mrp;
+            const unitDiscount = mrp - salePrice;
+
+            return {
+                name: item?.productId?.title,
+                selling_price: mrp, // Send MRP as selling price
+                units: item.quantity,
+                discount: unitDiscount, // Send actual discount amount per unit
+                color: item?.color.name,
+                size: item?.size?.label,
+                sku: item?.color?.sku,
+                tax: item?.productId?.gst || 0,
+                hsn: item?.productId?.hsn || generateRandomId().toString()
+            };
+        });
 
         // Get available pickup locations
         const pickup_locations = await getPickUpLocation();
@@ -491,7 +504,8 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
             shipping_is_billing: true,
             order_items: orderItems,
             payment_method: shipmentData?.paymentMode,
-            sub_total: subTotal,
+            sub_total: mrpTotal,
+            total_discount: totalDiscount,
             length: totalOrderLength,
             breadth: totalBredth,
             height: totalOrderHeight,
