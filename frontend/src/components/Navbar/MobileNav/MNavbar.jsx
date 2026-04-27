@@ -75,39 +75,41 @@ const MNavbar = () => {
         <Fragment>
             {/* Mobile Header */}
             <div className="sticky top-0 z-40 bg-white border-b shadow-sm h-16 flex items-center justify-between px-4 lg:hidden">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => setMenuShow(true)}>
-                        <Menu className="w-6 h-6 text-gray-900" />
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => setMenuShow(true)} className="[&_svg]:size-7">
+                        <Menu className="text-gray-900" />
                     </Button>
-                    <Link to="/" className="text-xl font-extrabold tracking-tighter text-gray-900">
+                    <Link to="/" className="text-xl font-extrabold tracking-tighter text-gray-900 py-1">
                         ON U
                     </Link>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
-                        <Search className="w-7 h-7 text-gray-900" />
+                <div className="flex items-center gap-0">
+                    <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)} className="[&_svg]:size-7">
+                        <Search className="text-gray-900" />
                     </Button>
 
-                    <Link to="/my_wishlist" className="relative p-2">
-                        <Heart className="w-7 h-7 text-gray-900" />
-                        {currentWishListCount > 0 && (
-                            <Badge variant="destructive" className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center p-0 text-[10px]">
-                                {currentWishListCount}
-                            </Badge>
-                        )}
-                    </Link>
+                    <Button variant="ghost" size="icon" asChild className="relative [&_svg]:size-7">
+                        <Link to="/my_wishlist">
+                            <Heart className="text-gray-900" />
+                            {currentWishListCount > 0 && (
+                                <Badge variant="destructive" className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center p-0 text-[10px]">
+                                    {currentWishListCount}
+                                </Badge>
+                            )}
+                        </Link>
+                    </Button>
 
-                    <Link to="/bag">
-                        <Button variant="ghost" size="icon" className="relative">
-                            <ShoppingBag className="w-7 h-7 text-gray-900" />
+                    <Button variant="ghost" size="icon" asChild className="relative [&_svg]:size-7">
+                        <Link to="/bag">
+                            <ShoppingBag className="text-gray-900" />
                             {currentBagCount > 0 && (
                                 <Badge variant="destructive" className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center p-0 text-[10px]">
                                     {currentBagCount}
                                 </Badge>
                             )}
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </div>
 
@@ -154,8 +156,8 @@ const MNavbar = () => {
                                     {user && <p className="text-xs text-gray-500">View Profile</p>}
                                 </div>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={handleMenuClose}>
-                                <X className="w-5 h-5" />
+                            <Button variant="ghost" size="icon" onClick={handleMenuClose} className="[&_svg]:size-7">
+                                <X className="text-gray-900" />
                             </Button>
                         </div>
 

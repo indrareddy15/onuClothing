@@ -61,15 +61,20 @@ export const getSortingKeyValuePairs = (key = null) => {
 	}
 };
 export const getReverseSortingValueValues = (sortingUrlValue) => {
-	// If the sortingUrlValue is from the sorting URL to value map
+	// URL param is usually a slug (e.g. price-low-to-high); map to display label.
+	// If it is already a known display label, return it (do not return the slug).
 	if (sortingUrlToValueMap[sortingUrlValue]) {
-		return sortingUrlToValueMap[sortingUrlValue];
-	} else if (valueToSortingUrlMap[sortingUrlValue]) {
+		return sortingUrlValue;
+	}
+	if (valueToSortingUrlMap[sortingUrlValue]) {
 		return valueToSortingUrlMap[sortingUrlValue];
 	}
 	return 'What`s New';
 }
 export function getStatusDescription(statusNumber) {
+	if (statusNumber === undefined || statusNumber === null || statusNumber === '') {
+		return 'Processing';
+	}
 	const statusMap = {
 		1: "New",
 		2: 'Invoiced',
@@ -135,7 +140,27 @@ export function getStatusDescription(statusNumber) {
 		83: 'Searching for Rider'
 	};
 
-	return statusMap[statusNumber] || 'Unknown Status';
+	if (typeof statusNumber === 'number' && Number.isFinite(statusNumber) && statusMap[statusNumber]) {
+		return statusMap[statusNumber];
+	}
+	if (typeof statusNumber === 'string') {
+		const trimmed = statusNumber.trim();
+		if (/^\d+$/.test(trimmed)) {
+			const code = parseInt(trimmed, 10);
+			if (statusMap[code]) return statusMap[code];
+		}
+		const upper = trimmed.toUpperCase().replace(/-/g, '_').replace(/\s+/g, '_');
+		const textAliases = {
+			NEW: 'New', INVOICED: 'Invoiced', READY_TO_SHIP: 'Ready To Ship', PICKUP_SCHEDULED: 'Pickup Scheduled',
+			SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Canceled', CANCELED: 'Canceled',
+			RTO_INITIATED: 'RTO Initiated', RTO_DELIVERED: 'RTO Delivered', OUT_FOR_DELIVERY: 'Out For Delivery',
+			OFD: 'Out For Delivery', IN_TRANSIT: 'In Transit', PICKED_UP: 'Picked Up', PICKUP_BOOKED: 'Pickup Booked',
+			SHIPMENT_BOOKED: 'Shipment Booked',
+		};
+		if (textAliases[upper]) return textAliases[upper];
+	}
+	if (statusMap[statusNumber]) return statusMap[statusNumber];
+	return 'Processing';
 }
 export function getImagesArrayFromProducts(product, getFirstColorOnly = false) {
 	// Helper function to check if a file is a video based on its extension

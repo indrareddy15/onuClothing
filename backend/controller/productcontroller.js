@@ -229,7 +229,36 @@ export const getallproducts = async (req, res) => {
         const totalProducts = await ProductModel.countDocuments(filter);
         const totalPages = Math.ceil(totalProducts / itemsPerPage);
 
-        const currentPageproducts = await ProductModel.find(filter).sort(sort).limit(itemsPerPage).skip(skip);
+        // Sort by the same "display" price as the storefront (salePrice when on sale, else MRP)
+        // so price sort matches what users see on cards; sorting by `price` alone can look reversed.
+        const sortByParam = Array.isArray(req.query.sortBy) ? req.query.sortBy[0] : req.query.sortBy;
+        const isPriceLowToHigh = sortByParam === 'price-low-to-high';
+        const isPriceHighToLow = sortByParam === 'price-high-to-low';
+
+        let currentPageproducts;
+        if (isPriceLowToHigh || isPriceHighToLow) {
+            const dir = isPriceLowToHigh ? 1 : -1;
+            currentPageproducts = await ProductModel.aggregate([
+                { $match: filter },
+                {
+                    $addFields: {
+                        __effectivePrice: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$salePrice', 0] }, 0] },
+                                '$salePrice',
+                                '$price',
+                            ],
+                        },
+                    },
+                },
+                { $sort: { __effectivePrice: dir, _id: 1 } },
+                { $skip: skip },
+                { $limit: itemsPerPage },
+                { $project: { __effectivePrice: 0 } },
+            ]);
+        } else {
+            currentPageproducts = await ProductModel.find(filter).sort(sort).limit(itemsPerPage).skip(skip);
+        }
         let productsPagination = currentPageproducts;
         if (isSpecialKeyWoards) {
             switch (req.query.keyword.toLowerCase()) {

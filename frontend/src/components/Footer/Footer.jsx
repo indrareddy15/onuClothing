@@ -14,34 +14,34 @@ import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 
 const STORE_LOCATIONS = [
-  {
-    name: "ON U - Aundh (Headquarter)",
-    address:
-      "Shop No. 5/6, Disha Apartments, Sr No. 148/150/151, Plot No. 17, Sanghvi Kesari Road, Pune - 411067",
-    mapLink:
-      "https://www.google.com/maps/search/?api=1&query=ON+U+Disha+Apartments+Sanghvi+Kesari+Road+Pune+411067",
-  },
-  {
-    name: "ON U - Kothrud",
-    address:
-      "Shop 1, PMT Bus Depot, Dahanukar Colony, Kothrud, Pune - 411038",
-    mapLink:
-      "https://www.google.com/maps/search/?api=1&query=ON+U+Kothrud+PMT+Bus+Depot+Dahanukar+Colony+Pune+411038",
-  },
-  {
-    name: "ON U - Salunke Vihar",
-    address:
-      "Shop No. 14, Girme Heights Building, Plot A, Salunke Vihar Road, Wanowrie, Pune - 411048",
-    mapLink:
-      "https://www.google.com/maps/search/?api=1&query=ON+U+Salunke+Vihar+Wanowrie+Pune+411048",
-  },
-  {
-    name: "ON U - Latur",
-    address:
-      "Gandhi Market, Sawe Wadi, Latur, Maharashtra - 413512",
-    mapLink:
-      "https://www.google.com/maps/search/?api=1&query=ON+U+Gandhi+Market+Latur+413512",
-  },
+	{
+		name: "ON U - Aundh (Headquarter)",
+		address:
+			"Shop No. 5/6, Disha Apartments, Sr No. 148/150/151, Plot No. 17, Sanghvi Kesari Road, Pune - 411067",
+		mapLink:
+			"https://www.google.com/maps/search/?api=1&query=ON+U+Disha+Apartments+Sanghvi+Kesari+Road+Pune+411067",
+	},
+	{
+		name: "ON U - Kothrud",
+		address:
+			"Shop 1, PMT Bus Depot, Dahanukar Colony, Kothrud, Pune - 411038",
+		mapLink:
+			"https://www.google.com/maps/search/?api=1&query=ON+U+Kothrud+PMT+Bus+Depot+Dahanukar+Colony+Pune+411038",
+	},
+	{
+		name: "ON U - Salunke Vihar",
+		address:
+			"Shop No. 14, Girme Heights Building, Plot A, Salunke Vihar Road, Wanowrie, Pune - 411048",
+		mapLink:
+			"https://www.google.com/maps/search/?api=1&query=ON+U+Salunke+Vihar+Wanowrie+Pune+411048",
+	},
+	{
+		name: "ON U - Latur",
+		address:
+			"Gandhi Market, Sawe Wadi, Latur, Maharashtra - 413512",
+		mapLink:
+			"https://www.google.com/maps/search/?api=1&query=ON+U+Gandhi+Market+Latur+413512",
+	},
 ];
 
 const Footer = () => {
@@ -142,10 +142,10 @@ const Footer = () => {
 								Experience the best of fashion with our premium collection. Join our community and stay updated.
 							</p>
 							<div className="flex space-x-3 mb-6">
-								<SocialIcon Icon={Facebook} href="#" colorClass="text-blue-600" />
-								<SocialIcon Icon={Twitter} href="#" colorClass="text-blue-400" />
-								<SocialIcon Icon={Instagram} href="#" colorClass="text-pink-600" />
-								<SocialIcon Icon={Youtube} href="#" colorClass="text-red-600" />
+								{/* <SocialIcon Icon={Facebook} href="#" colorClass="text-blue-600" /> */}
+								{/* <SocialIcon Icon={Twitter} href="#" colorClass="text-blue-400" /> */}
+								<SocialIcon Icon={Instagram} href="https://www.instagram.com/on_u_mens?igsh=bnJ4N3RkdnA3MTlo" colorClass="text-pink-600" />
+								{/* <SocialIcon Icon={Youtube} href="#" colorClass="text-red-600" /> */}
 							</div>
 						</div>
 
@@ -299,9 +299,9 @@ const Footer = () => {
 
 					{/* App Download & Info */}
 					<div>
-						<FooterSection title="Get the App" isMobile={false}>
+						<FooterSection title="" isMobile={false}>
 							<div className="space-y-6">
-								<div className="space-y-3">
+								{/* <div className="space-y-3">
 									<p className="text-xs text-gray-500">Download for best experience.</p>
 									<div className="grid grid-cols-2 gap-2">
 										<img src={g1} alt="Google Play" className="h-8 object-contain cursor-pointer hover:opacity-80 transition-opacity" />
@@ -310,7 +310,7 @@ const Footer = () => {
 									<div className="pt-1">
 										<PwaSetup />
 									</div>
-								</div>
+								</div> */}
 
 								<div className="space-y-3 pt-2 border-t border-gray-100">
 									<h3 className="text-sm font-bold tracking-wider text-gray-900 uppercase">Our Stores</h3>

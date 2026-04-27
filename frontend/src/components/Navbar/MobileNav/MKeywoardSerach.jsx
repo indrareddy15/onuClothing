@@ -34,8 +34,8 @@ const MKeywoardSerach = ({ setserdiv, state, setstate, searchenter, searchenters
 		<div className="fixed inset-0 z-50 bg-white flex flex-col">
 			{/* Search Header */}
 			<div className="flex items-center gap-2 p-2 border-b">
-				<Button variant="ghost" size="icon" onClick={() => setserdiv('hidden')}>
-					<ArrowLeft className="w-6 h-6 text-gray-900" />
+				<Button variant="ghost" size="icon" onClick={() => setserdiv('hidden')} className="[&_svg]:size-7">
+					<ArrowLeft className="text-gray-900" />
 				</Button>
 				<div className="flex-1 relative">
 					<Input
@@ -48,8 +48,8 @@ const MKeywoardSerach = ({ setserdiv, state, setstate, searchenter, searchenters
 						onKeyUp={applySerach}
 					/>
 				</div>
-				<Button variant="ghost" size="icon" onClick={(e) => startSerach(e, state)}>
-					<Search className="w-6 h-6 text-gray-900" />
+				<Button variant="ghost" size="icon" onClick={(e) => startSerach(e, state)} className="[&_svg]:size-7">
+					<Search className="text-gray-900" />
 				</Button>
 			</div>
 

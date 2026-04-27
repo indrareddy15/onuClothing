@@ -26,6 +26,7 @@ import { useSettingsContext } from '@/Context/SettingsContext';
 import { Label } from '../ui/label';
 
 const orderStatusOptions = [
+	{ id: 'Pending Acceptance', label: 'Pending Acceptance' },
 	{ id: 'Confirmed', label: 'Confirmed' },
 	{ id: 'Processing', label: 'Processing' },
 	{ id: 'Shipped', label: 'Shipped' },
@@ -155,6 +156,7 @@ const AdminOrderLayout = () => {
 
 	const getStatusColor = (status) => {
 		const colors = {
+			'Pending Acceptance': 'bg-orange-100 text-orange-700 border-orange-200',
 			'Confirmed': 'bg-blue-100 text-blue-700 border-blue-200',
 			'Processing': 'bg-yellow-100 text-yellow-700 border-yellow-200',
 			'Shipped': 'bg-purple-100 text-purple-700 border-purple-200',

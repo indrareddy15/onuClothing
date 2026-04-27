@@ -13,6 +13,25 @@ const SHIPROCKET_API_URL = process.env.SHIPROCKET_API_URL || 'https://apiv2.ship
 const SHIPROCKET_EMAIL = process.env.SHIPROCKET_EMAIL || '';
 const SHIPROCKET_PASSWORD = process.env.SHIPROCKET_PASSWORD || '';
 
+const DEFAULT_SHIPROCKET_CHANNEL_ID = 6217390;
+
+/**
+ * channel_id must exist on the Shiprocket seller account used for auth (Settings → Channels).
+ * Order documents store channel_id at checkout; env overrides when set.
+ */
+export function resolveShiprocketChannelId(explicit) {
+    if (explicit !== undefined && explicit !== null && String(explicit).trim() !== '') {
+        const n = Number(String(explicit).replace(/\D/g, ''));
+        if (Number.isFinite(n) && n > 0) return n;
+    }
+    const envId = process.env.SHIPROCKET_CHANNEL_ID;
+    if (envId !== undefined && envId !== null && String(envId).trim() !== '') {
+        const n = Number(String(envId).replace(/\D/g, ''));
+        if (Number.isFinite(n) && n > 0) return n;
+    }
+    return DEFAULT_SHIPROCKET_CHANNEL_ID;
+}
+
 let tokenRefreshPromise = null;
 let blockTimeout = null;
 
@@ -579,7 +598,7 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
             pickup_location: primaryLocation?.pickup_location,
             reseller_name: "",
             company_name: (primaryLocation?.pickup_location || "On U").substring(0, 100),
-            channel_id: '6282866',
+            channel_id: resolveShiprocketChannelId(shipmentData.channel_id),
             category: "Clothes",
             billing_isd_code: "+91",
             billing_customer_name: (address.Firstname || address.FirstName || address.name || 'Customer').substring(0, 50).trim(),
@@ -655,13 +674,21 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
 
     } catch (error) {
         console.error("Error creating Shiprocket order:");
+        let shiprocketMessage = error.message || 'Shiprocket request failed';
         if (error.response) {
-            console.error("Shiprocket API Response Error (Wait, did you check the token?):", error.response.status);
-            console.dir(error.response.data, { depth: null });
-            logger.error(`Shiprocket API error: ${JSON.stringify(error.response.data)}`);
+            const status = error.response.status;
+            const data = error.response.data;
+            shiprocketMessage = data?.message || data?.errors || shiprocketMessage;
+            console.error(
+                status === 400 && String(shiprocketMessage).toLowerCase().includes('channel')
+                    ? 'Shiprocket API 400 (channel_id): use a channel ID from this seller account (Shiprocket → Settings → Channels), set SHIPROCKET_CHANNEL_ID in .env, and align order.channel_id.'
+                    : 'Shiprocket API error:',
+                status
+            );
+            console.dir(data, { depth: null });
+            logger.error(`Shiprocket API error: ${JSON.stringify(data)}`);
 
-            // Special handling for 401/403 which might indicate token issues
-            if (error.response.status === 401 || error.response.status === 403) {
+            if (status === 401 || status === 403) {
                 console.warn("Token might be invalid or account blocked. Forcing token refresh for next time.");
                 await refreshAndSaveShipRocketToken();
             }
@@ -669,7 +696,10 @@ export const generateOrderForShipment = async (userId, shipmentData, randomOrder
             console.error("Communication error with Shiprocket:", error.message);
             logger.error(`Shiprocket communication error: ${error.message}`);
         }
-        return null;
+        return {
+            shipmentCreatedResponseData: null,
+            shiprocketError: typeof shiprocketMessage === 'string' ? shiprocketMessage : JSON.stringify(shiprocketMessage),
+        };
     }
 };
 export const getOrderReturnServicesablity = async (servicesData) => {
@@ -800,7 +830,7 @@ export const generateOrderReturnShipment = async (shipmentData, userId) => {
             order_date: formatDate(shipmentData.createdAt),
             reseller_name: "On U",
             company_name: "On U",
-            channel_id: '6282866',
+            channel_id: resolveShiprocketChannelId(shipmentData.channel_id),
             category: "Clothes",
             pickup_isd_code: "+91",
             pickup_customer_name: shipmentData.address.Firstname || shipmentData.address.FirstName,
@@ -947,7 +977,7 @@ export const generateExchangeShipment = async (shipmentData, userId) => {
             order_date: formatDate(shipmentData.createdAt),
             reseller_name: "On U",
             company_name: "On U",
-            channel_id: '6282866',
+            channel_id: resolveShiprocketChannelId(shipmentData.channel_id),
             category: "Clothes",
             pickup_isd_code: "+91",
             pickup_customer_name: shipmentData.address.Firstname,

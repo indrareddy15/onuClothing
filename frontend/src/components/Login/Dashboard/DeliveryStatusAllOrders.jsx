@@ -1,6 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { PackageCheck, Truck, Plane, MapPin, CheckCircle } from 'lucide-react';
 
+function normalizeStatusForDeliverySteps(raw) {
+	if (!raw) return '';
+	const s = String(raw).trim();
+	const lower = s.toLowerCase();
+	const aliases = {
+		'order confirmed': 'Confirmed',
+		processing: 'Confirmed',
+		new: 'Confirmed',
+		invoiced: 'Confirmed',
+		'ready to ship': 'Ready To Ship',
+		'pickup scheduled': 'Ready To Ship',
+		'pickup booked': 'Ready To Ship',
+		shipped: 'Shipped',
+		'in transit': 'Shipped',
+		'picked up': 'Shipped',
+		'out for delivery': 'Out for Delivery',
+		ofd: 'Out for Delivery',
+		delivered: 'Delivered',
+		fulfilled: 'Delivered',
+	};
+	if (aliases[lower]) return aliases[lower];
+	const stepsRef = [
+		{ title: 'Confirmed', label: 'Confirmed', icon: PackageCheck },
+		{ title: 'RTS', label: 'Ready To Ship', icon: Truck },
+		{ title: 'Shipped', label: 'Shipped', icon: Plane },
+		{ title: 'OFD', label: 'Out for Delivery', icon: MapPin },
+		{ title: 'Delivered', label: 'Delivered', icon: CheckCircle },
+	];
+	const idx = stepsRef.findIndex((step) => step.label.toLowerCase() === lower);
+	return idx >= 0 ? stepsRef[idx].label : s;
+}
+
 const DeliveryStatusAllOrders = ({ status, hiddenText }) => {
 	const steps = [
 		{ title: 'Confirmed', label: "Confirmed", icon: PackageCheck },
@@ -10,7 +42,8 @@ const DeliveryStatusAllOrders = ({ status, hiddenText }) => {
 		{ title: 'Delivered', label: "Delivered", icon: CheckCircle },
 	];
 
-	let currentStepIndex = steps.findIndex((step) => step.label === status);
+	const normalized = normalizeStatusForDeliverySteps(status);
+	let currentStepIndex = steps.findIndex((step) => step.label === normalized);
 
 	if (currentStepIndex < 0) {
 		currentStepIndex = -1;

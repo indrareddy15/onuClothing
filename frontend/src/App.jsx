@@ -34,6 +34,7 @@ import NotFoundPage from "./NotFoundPage";
 import PaymentSuccess from "./components/Bag/PaymentSuccess";
 import PaymentFailed from "./components/Bag/PaymentFailed";
 import PaymentPending from "./components/Bag/PaymentPending";
+import ScrollToTop from "./components/ScrollToTop";
 import { useServerAuth } from "./Contaxt/AuthContext";
 import axios from "axios";
 
@@ -104,6 +105,7 @@ function App() {
   const isMobile = width < 1024;
   return (
     <Router>
+      <ScrollToTop />
       <Navbar />
       <Routes>
         {/* Public Routes */}

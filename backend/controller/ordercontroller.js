@@ -15,10 +15,13 @@ import {
     generateOrderPicketUpRequest,
     generateOrderReturnShipment,
     generateRefundOrder,
-    getShipmentOrderByOrderId
+    getShipmentOrderByOrderId,
+    resolveShiprocketChannelId
 } from './LogisticsControllers/shiprocketLogisticController.js'
 import { getStatusDescription } from '../utility/basicUtils.js'
 import User from '../model/usermodel.js'
+
+export const MANUAL_ACCEPTANCE_STATUS = 'Pending Acceptance';
 
 export const createPaymentOrder = async (req, res) => {
     try {
@@ -380,9 +383,6 @@ export const verifyPayment = async (req, res) => {
 
 
 export const createOrder = async (req, res) => {
-    // Helper function to generate random order ID
-    const generateRandomId = () => Math.floor(10000000 + Math.random() * 90000000);
-
     // Helper function to remove products
     const removeProducts = async (products) => {
         const removingPromises = products.map(async (item) => {
@@ -433,43 +433,27 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: "Please select at least one product" });
         }
 
-        // Convenience Fees and random IDs generation
+        // Convenience Fees generation
         const alreadyPresentConvenienceFees = await WebSiteModel.findOne({ tag: 'ConvenienceFees' });
-        const randomOrderShipRocketId = generateRandomId();
-        const randomShipmentId = generateRandomId();
-
-        // Create shipment order
-        const createdShipRocketOrder = await generateOrderForShipment(req.user.id, {
-            order_id: randomOrderShipRocketId,
-            userId: req.user.id,
-            ConveenianceFees: alreadyPresentConvenienceFees?.ConvenienceFees || ConvenienceFees || 0,
-            orderItems: processingProducts,
-            address: Address,
-            TotalAmount,
-            paymentMode,
-            pincode: Address.pincode,
-            status: 'Confirmed',
-        }, randomOrderShipRocketId, randomShipmentId);
-
-        const { shipmentCreatedResponseData, bestCourier, manifest, warehouse_name, PickupData } = createdShipRocketOrder || {};
 
         // Create order entry in the database
         const orderData = new OrderModel({
-            order_id: shipmentCreatedResponseData?.order_id || randomOrderShipRocketId,
+            order_id: `ONU-${Date.now()}`,
             userId: req.user.id,
-            picketUpLoactionWareHouseName: warehouse_name || null,
-            shipment_id: shipmentCreatedResponseData?.shipment_id || randomShipmentId,
-            channel_id: '6217390',
+            picketUpLoactionWareHouseName: null,
+            shipment_id: null,
+            channel_id: resolveShiprocketChannelId(),
             ConveenianceFees: alreadyPresentConvenienceFees?.ConvenienceFees || ConvenienceFees || 0,
             orderItems: processingProducts,
             address: Address,
             TotalAmount,
             paymentMode: paymentMode || 'COD',
-            status: 'Confirmed',
-            PicketUpData: PickupData || null,
-            BestCourior: bestCourier || null,
-            ShipmentCreatedResponseData: shipmentCreatedResponseData || null,
-            manifest: manifest || null,
+            status: MANUAL_ACCEPTANCE_STATUS,
+            current_status: MANUAL_ACCEPTANCE_STATUS,
+            PicketUpData: null,
+            BestCourior: null,
+            ShipmentCreatedResponseData: null,
+            manifest: null,
         });
 
         // Save the order data
@@ -477,11 +461,6 @@ export const createOrder = async (req, res) => {
 
         // Prepare email sending promises
         const emailPromises = [];
-
-        // Send invoice if available
-        if (manifest?.is_invoice_created) {
-            emailPromises.push(sendMainifestMail(req.user.id, manifest?.invoice_url));
-        }
 
         // Send order confirmation email
         emailPromises.push(sendOrderPlacedMail(req.user.id, orderData));
@@ -1915,73 +1894,133 @@ export const exchangeOrder = async (req, res) => {
 }
 
 
+const normalizeOrderStatusLabel = (value) =>
+    String(value ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+
+export const createOrRefreshPickupForOrder = async (order, payload = {}) => {
+    const hasIntegratedShipment = Boolean(order?.ShipmentCreatedResponseData?.shipment_id);
+    const adminAcceptedStatuses = new Set(['confirmed', 'accepted', 'order confirmed']);
+    /** After admin opens order details, Shiprocket sync can overwrite `status` with labels like "New" / "Processing". Those must not block pickup when a shipment already exists. */
+    const pickupForbiddenWhenShipmentExists = new Set([
+        'delivered',
+        'canceled',
+        'cancelled',
+        'lost',
+        'destroyed',
+        'damaged',
+        'disposed off',
+        'fulfilled',
+        'rto delivered',
+        'cancelled before dispatched',
+    ]);
+
+    let normalizedStatus =
+        normalizeOrderStatusLabel(order?.status) ||
+        normalizeOrderStatusLabel(order?.current_status);
+
+    const shouldAutoAcceptBeforeShipment = () => {
+        if (order?.IsCancelled) return false;
+        const st = normalizeOrderStatusLabel(order?.status);
+        const cs = normalizeOrderStatusLabel(order?.current_status);
+        if (st.includes('cancel') || cs.includes('cancel')) return false;
+        if (st === 'pending acceptance' || cs === 'pending acceptance') return true;
+        // Legacy / SR sync noise before our app has created a Shiprocket shipment
+        if (!hasIntegratedShipment && (st === 'processing' || cs === 'processing')) return true;
+        return false;
+    };
+
+    // One admin action: "Send pickup" implies acceptance for orders still awaiting approval.
+    if (shouldAutoAcceptBeforeShipment()) {
+        order.status = 'Confirmed';
+        order.current_status = 'Confirmed';
+        await order.save();
+        normalizedStatus = 'confirmed';
+    }
+
+    if (hasIntegratedShipment) {
+        if (order?.IsCancelled) {
+            return { success: false, message: 'Cancelled orders cannot create pickup', result: null };
+        }
+        if (pickupForbiddenWhenShipmentExists.has(normalizedStatus)) {
+            return { success: false, message: 'Pickup is not available for this order status', result: null };
+        }
+    } else if (!adminAcceptedStatuses.has(normalizedStatus)) {
+        return { success: false, message: "Order must be accepted by admin before creating pickup", result: null };
+    }
+
+    let shipmentData = payload.ShipmentCreatedResponseData || order.ShipmentCreatedResponseData;
+    let bestCourier = payload.BestCourior || order.BestCourior;
+    let pickupRequest = null;
+
+    if (!shipmentData || !shipmentData.shipment_id) {
+        const randomShipmentId = Math.floor(10000000 + Math.random() * 90000000);
+        const createdShipRocketOrder = await generateOrderForShipment(order.userId, {
+            orderItems: order.orderItems,
+            address: order.address,
+            TotalAmount: order.TotalAmount,
+            paymentMode: order.paymentMode,
+            Status: order.status,
+            razorpay_order_id: order.razorpay_order_id,
+            ConveenianceFees: order.ConveenianceFees,
+            channel_id: order.channel_id,
+        }, order.order_id || String(order._id), order.shipment_id || randomShipmentId);
+
+        if (!createdShipRocketOrder || !createdShipRocketOrder.shipmentCreatedResponseData) {
+            const sr = createdShipRocketOrder?.shiprocketError;
+            return {
+                success: false,
+                message: sr
+                    ? `Shiprocket: ${sr}`
+                    : 'Failed to create ShipRocket shipment. Please check Shiprocket account/token status.',
+                result: null
+            };
+        }
+
+        shipmentData = createdShipRocketOrder.shipmentCreatedResponseData;
+        bestCourier = createdShipRocketOrder.bestCourier;
+        pickupRequest = createdShipRocketOrder.PickupData;
+
+        order.ShipmentCreatedResponseData = shipmentData;
+        order.BestCourior = bestCourier;
+        order.manifest = createdShipRocketOrder.manifest;
+        order.picketUpLoactionWareHouseName = createdShipRocketOrder.warehouse_name;
+        order.shipment_id = shipmentData.shipment_id;
+        order.PicketUpData = pickupRequest || null;
+        await order.save();
+
+        if (pickupRequest) {
+            return { success: true, message: 'Successfully created shipment and pickup request', result: order };
+        }
+    }
+
+    if (!pickupRequest) {
+        pickupRequest = await generateOrderPicketUpRequest(order, shipmentData, bestCourier);
+        if (!pickupRequest) {
+            return { success: false, message: "Failed to create pickup request", result: null };
+        }
+    }
+
+    order.PicketUpData = pickupRequest;
+    await order.save();
+    return { success: true, message: 'Successfully created a new pickup', result: order };
+};
+
 export const tryCreatePickupResponse = async (req, res) => {
     try {
         const { orderId } = req.body;
         if (!orderId) return res.status(400).json({ success: false, message: "Order ID is required" });
 
-        // Populate productId so we have the product details needed to create the Shiprocket order if it's missing
         const order = await OrderModel.findById(orderId).populate('orderItems.productId');
         if (!order) return res.status(404).json({ success: false, message: "Order not found" });
 
-        // Read ShipmentCreatedResponseData and BestCourior from the DB order document
-        let shipmentData = req.body.ShipmentCreatedResponseData || order.ShipmentCreatedResponseData;
-        let bestCourier = req.body.BestCourior || order.BestCourior;
-        let pickupRequest = null;
-
-        if (!shipmentData || !shipmentData.shipment_id) {
-            console.log("No shipment data found in order, creating Shiprocket shipment now...");
-            // Generate the shipment data since it was bypassed during checkout
-            const randomShipmentId = Math.floor(10000000 + Math.random() * 90000000);
-
-            const createdShipRocketOrder = await generateOrderForShipment(order.userId, {
-                orderItems: order.orderItems,
-                address: order.address,
-                TotalAmount: order.TotalAmount,
-                paymentMode: order.paymentMode,
-                Status: order.status,
-                razorpay_order_id: order.razorpay_order_id,
-                ConveenianceFees: order.ConveenianceFees,
-            }, order.order_id || String(order._id), order.shipment_id || randomShipmentId);
-
-            if (!createdShipRocketOrder || !createdShipRocketOrder.shipmentCreatedResponseData) {
-                return res.status(400).json({ success: false, message: "Failed to create ShipRocket shipment. Please check Shiprocket account/token status." });
-            }
-
-            shipmentData = createdShipRocketOrder.shipmentCreatedResponseData;
-            bestCourier = createdShipRocketOrder.bestCourier;
-            pickupRequest = createdShipRocketOrder.PickupData;
-
-            // Save the newly generated shipment data to the order
-            order.ShipmentCreatedResponseData = shipmentData;
-            order.BestCourior = bestCourier;
-            order.manifest = createdShipRocketOrder.manifest;
-            order.picketUpLoactionWareHouseName = createdShipRocketOrder.warehouse_name;
-            order.shipment_id = shipmentData.shipment_id;
-            order.PicketUpData = pickupRequest || null;
-            await order.save();
-
-            // If the pickup was successfully generated as part of generateOrderForShipment, we can return early
-            if (pickupRequest) {
-                return res.status(200).json({ success: true, message: 'Successfully created shipment and pickup request', result: order });
-            }
+        const result = await createOrRefreshPickupForOrder(order, req.body);
+        if (!result.success) {
+            return res.status(400).json(result);
         }
-
-        if (!pickupRequest) {
-            console.log("Generating pickup request for shipment...");
-            pickupRequest = await generateOrderPicketUpRequest(order, shipmentData, bestCourier);
-            console.log("Created Pickup Request: ", pickupRequest);
-            if (!pickupRequest) {
-                return res.status(400).json({ success: false, message: "Failed to create pickup request", result: null });
-            }
-        }
-
-        // Save pickup data to the order
-        order.PicketUpData = pickupRequest;
-        await order.save();
-
-        res.status(200).json({ success: true, message: 'Successfully created a new pickup', result: order })
-
+        return res.status(200).json(result);
     } catch (error) {
         console.error("Error occured during creating pickup request", error);
         logger.error(`Error occured during creating pickup request ${error.message}`);

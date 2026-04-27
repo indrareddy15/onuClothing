@@ -551,6 +551,9 @@ export const filterOptions = {
     ]
 }
 export function getStatusDescription(statusNumber) {
+    if (statusNumber === undefined || statusNumber === null || statusNumber === '') {
+        return 'Processing';
+    }
     const statusMap = {
         1: "New",
         2: 'Invoiced',
@@ -616,7 +619,27 @@ export function getStatusDescription(statusNumber) {
         83: 'Searching for Rider'
     };
 
-    return statusMap[statusNumber] || 'N/A';
+    if (typeof statusNumber === 'number' && Number.isFinite(statusNumber) && statusMap[statusNumber]) {
+        return statusMap[statusNumber];
+    }
+    if (typeof statusNumber === 'string') {
+        const trimmed = statusNumber.trim();
+        if (/^\d+$/.test(trimmed)) {
+            const code = parseInt(trimmed, 10);
+            if (statusMap[code]) return statusMap[code];
+        }
+        const upper = trimmed.toUpperCase().replace(/-/g, '_').replace(/\s+/g, '_');
+        const textAliases = {
+            NEW: 'New', INVOICED: 'Invoiced', READY_TO_SHIP: 'Ready To Ship', PICKUP_SCHEDULED: 'Pickup Scheduled',
+            SHIPPED: 'Shipped', DELIVERED: 'Delivered', CANCELLED: 'Canceled', CANCELED: 'Canceled',
+            RTO_INITIATED: 'RTO Initiated', RTO_DELIVERED: 'RTO Delivered', OUT_FOR_DELIVERY: 'Out For Delivery',
+            OFD: 'Out For Delivery', IN_TRANSIT: 'In Transit', PICKED_UP: 'Picked Up', PICKUP_BOOKED: 'Pickup Booked',
+            SHIPMENT_BOOKED: 'Shipment Booked',
+        };
+        if (textAliases[upper]) return textAliases[upper];
+    }
+    if (statusMap[statusNumber]) return statusMap[statusNumber];
+    return 'Processing';
 }
 
 
@@ -629,6 +652,7 @@ export const GetBadgeColor = (status) => {
         case 'Shipped':
             return 'bg-blue-600 text-white hover:bg-blue-800';
         case 'Out for Delivery':
+        case 'Out For Delivery':
             return 'bg-pink-600 text-white hover:bg-pink-800';
         case 'Delivered':
             return 'bg-green-600 text-white hover:bg-green-800';

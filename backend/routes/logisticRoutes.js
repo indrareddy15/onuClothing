@@ -5,7 +5,9 @@ import ProtectAdminRoute from '../Middelwares/adminProtectRoute.js';
 
 const route = express.Router();
 route.post('/login',isAuthenticateuser,ProtectAdminRoute,loginLogistics)
-route.post('/weebook/updateOrderStatus',updateOrderStatusFromShipRokcet)
+// Public webhook — Shiprocket POSTs here (typo URL kept for existing dashboard configs)
+route.post('/weebook/updateOrderStatus', updateOrderStatusFromShipRokcet)
+route.post('/webhook/updateOrderStatus', updateOrderStatusFromShipRokcet)
 
 route.post('/warehouse/create',isAuthenticateuser,ProtectAdminRoute,createNewWareHouse)
 

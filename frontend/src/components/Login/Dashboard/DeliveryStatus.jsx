@@ -1,15 +1,45 @@
 import React, { useState, useEffect } from "react";
 
-const DeliveryStatus = ({ status, hiddenText }) => {
-	const steps = [
-		{ title: "Confirmed", label: "Confirmed", icon: "📦" },
-		{ title: "RTS", label: "Ready To Ship", icon: "🚚" },
-		{ title: "Shipped", label: "Shipped", icon: "✈️" },
-		{ title: "OFD", label: "Out for Delivery", icon: "📬" },
-		{ title: "Delivered", label: "Delivered", icon: "✅" },
-	];
+const STEPS = [
+	{ title: "Confirmed", label: "Confirmed", icon: "📦" },
+	{ title: "RTS", label: "Ready To Ship", icon: "🚚" },
+	{ title: "Shipped", label: "Shipped", icon: "✈️" },
+	{ title: "OFD", label: "Out for Delivery", icon: "📬" },
+	{ title: "Delivered", label: "Delivered", icon: "✅" },
+];
 
-	let currentStepIndex = steps.findIndex((step) => step.label === status);
+/** Map API / webhook labels to the step `label` strings used in this UI */
+function normalizeStatusForDeliverySteps(raw) {
+	if (!raw) return "";
+	const s = String(raw).trim();
+	const lower = s.toLowerCase();
+	const aliases = {
+		"order confirmed": "Confirmed",
+		processing: "Confirmed",
+		new: "Confirmed",
+		invoiced: "Confirmed",
+		"ready to ship": "Ready To Ship",
+		"pickup scheduled": "Ready To Ship",
+		"pickup booked": "Ready To Ship",
+		shipped: "Shipped",
+		"in transit": "Shipped",
+		"picked up": "Shipped",
+		"out for delivery": "Out for Delivery",
+		ofd: "Out for Delivery",
+		delivered: "Delivered",
+		fulfilled: "Delivered",
+	};
+	if (aliases[lower]) return aliases[lower];
+	const idx = STEPS.findIndex((step) => step.label.toLowerCase() === lower);
+	if (idx >= 0) return STEPS[idx].label;
+	return s;
+}
+
+const DeliveryStatus = ({ status, hiddenText }) => {
+	const steps = STEPS;
+
+	const normalized = normalizeStatusForDeliverySteps(status);
+	let currentStepIndex = steps.findIndex((step) => step.label === normalized);
 
 	// Handle invalid status (i.e., not found in the steps array)
 	if (currentStepIndex < 0) {

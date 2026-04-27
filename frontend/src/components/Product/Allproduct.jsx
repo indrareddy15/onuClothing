@@ -123,12 +123,14 @@ const Allproductpage = ({ user }) => {
 
     useEffect(() => {
         dispatchFetchAllProduct(currentPage);
+        window.scrollTo(0, 0);
     }, []);
 
     // Monitor URL changes for sorting, filtering
     useEffect(() => {
         const handleUrlChange = () => {
             setCurrentPage(1);
+            setTheCurrentSortValues();
             dispatchFetchAllProduct(1);
         };
 
@@ -139,7 +141,9 @@ const Allproductpage = ({ user }) => {
     // Monitor location changes for filter updates (when using useNavigate)
     useEffect(() => {
         setCurrentPage(1);
+        setTheCurrentSortValues();
         dispatchFetchAllProduct(1);
+        window.scrollTo(0, 0);
     }, [location.search]);
 
     useEffect(() => {
@@ -153,7 +157,7 @@ const Allproductpage = ({ user }) => {
             {(!productAllProductsLoading && noFilterProducts && noFilterProducts.length > 0) && (
                 <MFilter
                     sortvalue={sortvalue}
-                    setSortValue={setTheCurrentSortValues}
+                    setSortValue={setSortValue}
                     scrollableDivRef={scrollableDivRef}
                     product={noFilterProducts}
                     filteredProducts={product}

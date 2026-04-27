@@ -3,10 +3,10 @@ import crypto from 'crypto';
 import OrderModel from "../model/ordermodel.js";
 import ProductModel from "../model/productmodel.js";
 import Bag from "../model/bag.js";
-import { generateOrderForShipment } from "../controller/LogisticsControllers/shiprocketLogisticController.js";
-import { sendMainifestMail, sendOrderPlacedMail } from "../controller/emailController.js";
+import { sendOrderPlacedMail } from "../controller/emailController.js";
 import WebSiteModel from "../model/websiteData.model.js";
 import PaymentOrderModel from "../model/PaymentGatway.model.js";
+import { resolveShiprocketChannelId } from "../controller/LogisticsControllers/shiprocketLogisticController.js";
 
 export const instance = new Razorpay({
     key_id: process.env.RAZOR_PG_ID,
@@ -349,7 +349,7 @@ export const createOrder = async (req, res) => {
 }; */
 
 export const paymentVerification = async (req, res) => {
-    const generateRandomId = () => Math.floor(10000000 + Math.random() * 90000000);
+    const generateOrderId = () => `ONU-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     // Helper function to validate the payment signature
     const isPaymentSignatureValid = (razorpay_payment_id, razorpay_order_id, razorpay_signature) => {
@@ -371,19 +371,6 @@ export const paymentVerification = async (req, res) => {
             }
         });
         await Promise.all(promises);
-    };
-
-    // Helper function to create order in ShipRocket
-    const createShipRocketOrder = async (userId, orderDetails, randomOrderShipRocketId, randomShipmentId) => {
-        try {
-            return await generateOrderForShipment(userId, {
-                order_id: randomOrderShipRocketId,
-                ...orderDetails,
-            }, randomOrderShipRocketId, randomShipmentId);
-        } catch (error) {
-            console.error("Error while creating ShipRocket order: ", error);
-            return null;
-        }
     };
 
     try {
@@ -410,33 +397,16 @@ export const paymentVerification = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Bag not found' });
         }
 
-        // Generate ShipRocket order IDs
-        const randomOrderShipRocketId = generateRandomId();
-        const randomShipmentId = generateRandomId();
-
         const alreadyPresentConvenenceFees = await WebSiteModel.findOne({ tag: 'ConvenienceFees' });
-
-        // Create ShipRocket order
-        const createdShipRocketOrder = await createShipRocketOrder(req.user.id, {
-            orderItems: proccessingProducts,
-            address: selectedAddress,
-            TotalAmount: totalAmount,
-            paymentMode: "prepaid",
-            status: 'Confirmed',
-            razorpay_order_id: razorpay_order_id,
-            ConveenianceFees: alreadyPresentConvenenceFees?.ConvenienceFees || 0,
-        }, randomOrderShipRocketId, randomShipmentId);
-
-        const { manifest, warehouse_name, PickupData, bestCourier, shipmentCreatedResponseData } = createdShipRocketOrder || {};
 
         // Create the order in the database
         // Create the order in the database
         const orderData = new OrderModel({
-            order_id: shipmentCreatedResponseData?.order_id || randomOrderShipRocketId,
+            order_id: generateOrderId(),
             userId: id,
-            PicketUpLoactionWareHouseName: warehouse_name || null,
-            shipment_id: shipmentCreatedResponseData?.shipment_id || randomShipmentId,
-            channel_id: '6217390',
+            PicketUpLoactionWareHouseName: null,
+            shipment_id: null,
+            channel_id: resolveShiprocketChannelId(),
             ConveenianceFees: alreadyPresentConvenenceFees?.ConvenienceFees || 0,
             orderItems: proccessingProducts,
             razorpay_order_id,
@@ -444,11 +414,12 @@ export const paymentVerification = async (req, res) => {
             address: selectedAddress,
             TotalAmount: totalAmount,
             paymentMode: "prepaid",
-            status: 'Confirmed',
-            PicketUpData: PickupData || null,
-            ShipmentCreatedResponseData: shipmentCreatedResponseData || null,
-            BestCourior: bestCourier || null,
-            manifest: manifest || null,
+            status: 'Pending Acceptance',
+            current_status: 'Pending Acceptance',
+            PicketUpData: null,
+            ShipmentCreatedResponseData: null,
+            BestCourior: null,
+            manifest: null,
         });
 
         await orderData.save();
@@ -473,17 +444,7 @@ export const paymentVerification = async (req, res) => {
             }
         }
 
-        // Send emails in parallel
-        const emailPromises = [];
-
-        if (manifest?.is_invoice_created) {
-            emailPromises.push(sendMainifestMail(id, manifest?.invoice_url));
-        }
-
-        emailPromises.push(sendOrderPlacedMail(id, orderData));
-
-        // Await all email promises concurrently
-        await Promise.all(emailPromises);
+        await sendOrderPlacedMail(id, orderData);
 
         // Respond with success
         res.status(200).json({

@@ -3,33 +3,123 @@ import ProductModel from "../../model/productmodel.js";
 import WareHouseModel from "../../model/WareHosue.mode.js";
 import WebSiteModel from "../../model/websiteData.model.js";
 import logger from "../../utility/loggerUtils.js";
+import { getStatusDescription } from "../../utility/basicUtils.js";
 import { sendOrderStatusUpdateMail } from "../emailController.js";
 import { addNewPicketUpLocation, checkShipmentAvailability, fetchAllPickupLocation, getAuthToken } from "./shiprocketLogisticController.js";
 
+/** Merge root body with nested payload shapes some Shiprocket / proxy setups use */
+function flattenWebhookBody(body) {
+    if (!body || typeof body !== "object") return {};
+    const nested = body.payload || body.data || body.webhook_data;
+    if (nested && typeof nested === "object") {
+        return { ...nested, ...body };
+    }
+    return { ...body };
+}
+
+function pickNumericShipmentStatus(body) {
+    const raw =
+        body.shipment_status_id ??
+        body.shipment_statusid ??
+        body.status_code ??
+        body.sr_status ??
+        body.sr_status_id;
+    if (raw !== undefined && raw !== null && raw !== "") {
+        const n = parseInt(String(raw).trim(), 10);
+        if (!Number.isNaN(n)) return n;
+    }
+    if (typeof body.shipment_status === "number" && Number.isFinite(body.shipment_status)) {
+        return body.shipment_status;
+    }
+    if (typeof body.shipment_status === "string" && /^\d+$/.test(body.shipment_status.trim())) {
+        return parseInt(body.shipment_status.trim(), 10);
+    }
+    return null;
+}
+
+async function findOrderForWebhook(body) {
+    const orderIdRaw = body.order_id ?? body.orderId ?? body.shiprocket_order_id ?? body.channel_order_id;
+    const shipmentIdRaw = body.shipment_id ?? body.shipmentId ?? body.sr_shipment_id;
+
+    if (orderIdRaw !== undefined && orderIdRaw !== null && `${orderIdRaw}`.trim() !== "") {
+        const idStr = String(orderIdRaw).trim();
+        let doc = await OrderModel.findOne({ order_id: idStr });
+        if (!doc && !Number.isNaN(Number(idStr))) {
+            doc = await OrderModel.findOne({ order_id: Number(idStr) });
+        }
+        if (doc) return doc;
+    }
+    if (shipmentIdRaw !== undefined && shipmentIdRaw !== null && `${shipmentIdRaw}`.trim() !== "") {
+        const sid = String(shipmentIdRaw).trim();
+        let doc = await OrderModel.findOne({ shipment_id: sid });
+        if (!doc && !Number.isNaN(Number(sid))) {
+            doc = await OrderModel.findOne({ shipment_id: String(Number(sid)) });
+        }
+        if (doc) return doc;
+    }
+    return null;
+}
+
 export const updateOrderStatusFromShipRokcet = async (req, res) => {
     try {
-        console.log("Shiprocket order Status Update Receving Data: ", req.body);
-        const { order_id, current_status, shipment_status, shipment_status_id } = req.body;
-        // console.log(`Order ID: ${order_id}, Status: ${current_status}`);
-        const dbOrder = await OrderModel.findOne({ order_id: order_id });
-        if (dbOrder) {
-            dbOrder.status = current_status;
-            dbOrder.current_status = shipment_status;
-            dbOrder.shipment_status = shipment_status_id;
-            await dbOrder.save();
-            try {
-                sendOrderStatusUpdateMail(dbOrder.userId, dbOrder);
-            } catch (error) {
-                console.error(`Error saving order ${order_id}`)
-            }
-            console.log(`Order status updated to ${current_status} for ShipRocket Order ID: ${order_id}`);
-        } else {
-            console.log(`Order Not found! Order ID: ${order_id}`);
+        const body = flattenWebhookBody(req.body);
+        logger.info(`Shiprocket webhook received keys=${Object.keys(body).join(",")}`);
+
+        const dbOrder = await findOrderForWebhook(body);
+        const numericStatus = pickNumericShipmentStatus(body);
+
+        if (!dbOrder) {
+            const oid = body.order_id ?? body.orderId;
+            const sid = body.shipment_id ?? body.shipmentId;
+            logger.warn(`Shiprocket webhook: no DB order for order_id=${oid} shipment_id=${sid}`);
+            return res.status(200).send("OK");
         }
-        res.status(200).send('Webhook received');
+
+        const lastStatus = dbOrder.status;
+        const hasTextStatus =
+            typeof body.current_status === "string" && body.current_status.trim().length > 0;
+        const hasShipmentStatusField =
+            body.shipment_status !== undefined &&
+            body.shipment_status !== null &&
+            `${body.shipment_status}`.trim() !== "";
+
+        if (numericStatus == null && !hasTextStatus && !hasShipmentStatusField) {
+            logger.warn(
+                `Shiprocket webhook: matched order ${dbOrder.order_id} but no status fields; skipping DB update`
+            );
+            return res.status(200).send("OK");
+        }
+
+        let statusLabel;
+        if (numericStatus != null) {
+            dbOrder.shipment_status = numericStatus;
+            statusLabel = getStatusDescription(numericStatus);
+        } else {
+            statusLabel = getStatusDescription(
+                hasTextStatus ? body.current_status.trim() : body.shipment_status
+            );
+        }
+
+        dbOrder.status = statusLabel;
+        dbOrder.current_status = statusLabel;
+
+        await dbOrder.save();
+
+        if (lastStatus !== dbOrder.status) {
+            try {
+                await sendOrderStatusUpdateMail(dbOrder.userId, dbOrder);
+            } catch (mailErr) {
+                console.error(`Shiprocket webhook: mail error order=${dbOrder.order_id}`, mailErr);
+                logger.error(`Shiprocket webhook mail: ${mailErr?.message}`);
+            }
+        }
+
+        console.log(`Shiprocket webhook: updated order_id=${dbOrder.order_id} status=${statusLabel}`);
+        return res.status(200).send("OK");
     } catch (error) {
-        console.error("Error updating order status: ", error);
-        logger.error(`Error occured during updating order status ${error.message}`);
+        console.error("Error updating order status from Shiprocket webhook: ", error);
+        logger.error(`Shiprocket webhook error: ${error.message}`);
+        return res.status(500).send("Error");
     }
 }
 

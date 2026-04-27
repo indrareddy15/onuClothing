@@ -6,6 +6,7 @@ import { handleImageUpload, handleMultipleImageUpload } from "../../utility/clou
 import { sendOrderStatusUpdateMail, sendUpdateOrderStatus } from "../emailController.js";
 import { calculateDiscountPercentage, calculateGst, getStatusDescription, getStringFromObject } from "../../utility/basicUtils.js";
 import { getShipmentOrderByOrderId, getAllReturnOrdersShiprockets } from "../LogisticsControllers/shiprocketLogisticController.js";
+import { createOrRefreshPickupForOrder, MANUAL_ACCEPTANCE_STATUS } from "../ordercontroller.js";
 import Bag from "../../model/bag.js";
 import WhishList from "../../model/wishlist.js";
 import WebSiteModel from "../../model/websiteData.model.js";
@@ -978,7 +979,13 @@ export const getOrderById = async (req, res) => {
             return res.status(200).json({ Success: true, message: "No Orders Found Yet", order: {} })
         }
         let lastStatus = order.status;
+        /** Opening order details calls Shiprocket tracking; that must not replace "Pending Acceptance" or pickup is rejected with 400. */
+        const preserveManualAcceptance =
+            String(order.status || '').trim() === MANUAL_ACCEPTANCE_STATUS;
         try {
+            if (preserveManualAcceptance) {
+                return res.status(200).json({ Success: true, message: 'Fetched All Orders', result: order });
+            }
             const shipmenetOrder = await getShipmentOrderByOrderId(order)
             if (shipmenetOrder) {
                 if (shipmenetOrder.tracking_data) {
@@ -1032,14 +1039,34 @@ export const updateOrderStatus = async (req, res) => {
         if (!orderId || !status) {
             return res.status(400).json({ Success: false, message: "Order Id and Status are required" });
         }
-        const order = await OrderModel.findByIdAndUpdate(orderId, { status: status }, { new: true });
+        const order = await OrderModel.findById(orderId).populate('orderItems.productId');
         if (!order) {
             return res.status(404).json({ Success: false, message: "Order not found" });
         }
-        // const updateMailSent = await
+        order.status = status;
+        order.current_status = status;
+        await order.save();
+
+        const shouldCreatePickup =
+            ['confirmed', 'accepted', 'order confirmed'].includes(String(status).trim().toLowerCase()) &&
+            !order.PicketUpData;
+
+        let pickupMessage = null;
+        if (shouldCreatePickup) {
+            const pickupResponse = await createOrRefreshPickupForOrder(order);
+            if (!pickupResponse.success) {
+                pickupMessage = pickupResponse.message;
+            } else {
+                pickupMessage = pickupResponse.message;
+            }
+        }
+
         const updateOrderStatusMailSent = await sendUpdateOrderStatus(id, order);
         if (updateOrderStatusMailSent) {
-            return res.status(200).json({ Success: true, message: "Order Status Updated", result: order });
+            const message = pickupMessage
+                ? `Order Status Updated. ${pickupMessage}`
+                : "Order Status Updated";
+            return res.status(200).json({ Success: true, message, result: order });
         }
         res.status(200).json({ Success: false, message: "Failed to update order status" });
     } catch (error) {

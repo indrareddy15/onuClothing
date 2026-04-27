@@ -77,6 +77,7 @@ const getStatusColorClass = (status) => {
 		'Processing': 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200',
 		'Shipped': 'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-200',
 		'Delivered': 'bg-green-100 text-green-800 hover:bg-green-200 border-green-200',
+		'Canceled': 'bg-red-100 text-red-800 hover:bg-red-200 border-red-200',
 		'Cancelled': 'bg-red-100 text-red-800 hover:bg-red-200 border-red-200',
 		'Returned': 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200',
 		'RTS': 'bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200',
