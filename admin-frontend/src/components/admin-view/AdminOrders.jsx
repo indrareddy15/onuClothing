@@ -64,6 +64,12 @@ const AdminOrderLayout = () => {
 	const { user } = useSelector((state) => state.auth);
 	const { isLoading, token, orderList, orderDetails, returnOrderList } = useSelector((state) => state.adminOrder);
 
+	const getCustomerName = (order) => {
+		const address = order?.address || {};
+		const fullName = `${address?.Firstname || ''} ${address?.Lastname || ''}`.trim();
+		return fullName || address?.name || '-';
+	};
+
 	useEffect(() => {
 		dispatch(adminGetAllOrders());
 		dispatch(admingetShiprocketToken());
@@ -107,9 +113,10 @@ const AdminOrderLayout = () => {
 			const query = searchQuery.toLowerCase();
 			filtered = filtered.filter(order =>
 				order?.order_id?.toLowerCase().includes(query) ||
-				order?.address?.Firstname?.toLowerCase().includes(query) ||
-				order?.address?.Lastname?.toLowerCase().includes(query) ||
-				order?.address?.Email?.toLowerCase().includes(query)
+				`${order?.address?.Firstname || ''} ${order?.address?.Lastname || ''}`.toLowerCase().includes(query) ||
+				order?.address?.name?.toLowerCase().includes(query) ||
+				order?.address?.Email?.toLowerCase().includes(query) ||
+				order?.address?.email?.toLowerCase().includes(query)
 			);
 		}
 
@@ -182,7 +189,7 @@ const AdminOrderLayout = () => {
 		const headers = ['Order ID', 'Customer', 'Amount', 'Status', 'Payment', 'Date'];
 		const rows = filteredOrders.map(order => [
 			order.order_id,
-			`${order?.address?.Firstname} ${order?.address?.Lastname}`,
+			getCustomerName(order),
 			order.TotalAmount,
 			order.status,
 			order.paymentMode,
@@ -203,7 +210,7 @@ const AdminOrderLayout = () => {
 		checkAndCreateToast('success', 'Orders exported successfully');
 	};
 
-	if (isLoading) return <LoadingView />;
+	if (isLoading && (!orderList || orderList.length === 0)) return <LoadingView />;
 
 	return (
 		<div className="w-full space-y-6">
@@ -356,12 +363,12 @@ const AdminOrderLayout = () => {
 										<TableCell>
 											<div className="flex flex-col">
 												<span className="font-medium">
-													{order?.address?.Firstname} {order?.address?.Lastname} {order?.address?.name}
+													{getCustomerName(order)}
 												</span>
 											</div>
 										</TableCell>
 										<TableCell className="text-center">
-											<span className="text-gray-700">{order?.cartItems?.length || 0}</span>
+											<span className="text-gray-700">{order?.orderItems?.length || order?.cartItems?.length || 0}</span>
 										</TableCell>
 										<TableCell>
 											<Badge className={`capitalize ${getPaymentColor(order?.paymentMode)}`}>

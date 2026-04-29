@@ -46,6 +46,7 @@ import {
   CardHeader,
   CardTitle as CardTitleComponent,
 } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 const initialFormData = {
   status: "",
@@ -56,6 +57,7 @@ const AdminOrdersDetailsView = ({ order: initialOrder }) => {
   const [formData, setFormData] = useState(initialFormData);
   const dispatch = useDispatch();
   const { orderDetails } = useSelector((state) => state.adminOrder);
+  const [isItemsDialogOpen, setIsItemsDialogOpen] = useState(false);
 
   // Use orderDetails from Redux if available and matches the ID, otherwise fallback to prop
   const order = orderDetails && orderDetails._id === initialOrder?._id ? orderDetails : initialOrder;
@@ -163,6 +165,15 @@ const AdminOrdersDetailsView = ({ order: initialOrder }) => {
       checkAndCreateToast("error", "Failed to Cancel Order");
     }
     handleFetchOrderDetails(order?._id);
+  };
+
+  const getOrderItemImage = (item) => {
+    return (
+      item?.productId?.image ||
+      item?.color?.images?.[0]?.url ||
+      item?.productId?.colors?.find((color) => color?.name === item?.color?.name)?.images?.[0]?.url ||
+      ""
+    );
   };
 
   return (
@@ -282,24 +293,34 @@ const AdminOrdersDetailsView = ({ order: initialOrder }) => {
             {/* Order Items */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitleComponent className="text-base font-semibold flex items-center gap-2">
-                  <Package className="w-4 h-4" />
-                  Order Items
-                </CardTitleComponent>
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitleComponent className="text-base font-semibold flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Order Items
+                  </CardTitleComponent>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsItemsDialogOpen(true)}
+                    disabled={!order?.orderItems?.length}
+                  >
+                    View Products
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {order?.orderItems?.map((item, index) => (
+                {order?.orderItems?.length ? order?.orderItems?.map((item, index) => (
                   <div
                     key={index}
                     className="flex gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100"
                   >
-                    {item?.productId?.image && (
+                    {getOrderItemImage(item) ? (
                       <img
-                        src={item?.productId?.image}
+                        src={getOrderItemImage(item)}
                         alt={item?.productId?.title}
                         className="w-16 h-16 object-cover rounded-md"
                       />
-                    )}
+                    ) : null}
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">
                         {item?.productId?.title}
@@ -339,11 +360,13 @@ const AdminOrdersDetailsView = ({ order: initialOrder }) => {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        ₹ {item?.productId?.salePrice || item?.productId?.price}
+                        ₹ {item?.productId?.salePrice || item?.productId?.price || item?.price}
                       </p>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-sm text-gray-500">No items available for this order.</p>
+                )}
               </CardContent>
             </Card>
 
@@ -631,6 +654,47 @@ const AdminOrdersDetailsView = ({ order: initialOrder }) => {
           </div>
         </div>
       </SheetFooter>
+
+      <Dialog open={isItemsDialogOpen} onOpenChange={setIsItemsDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Ordered Products</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            {order?.orderItems?.map((item, index) => (
+              <div key={index} className="border rounded-lg p-4 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="bg-gray-50 border rounded-md p-3 flex items-center justify-center min-h-[260px]">
+                    {getOrderItemImage(item) ? (
+                      <img
+                        src={getOrderItemImage(item)}
+                        alt={item?.productId?.title || "Ordered product"}
+                        className="w-full h-full max-h-[420px] object-contain rounded-md"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-500">Image not available</div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-gray-900 text-lg">
+                      {item?.productId?.title || "Untitled product"}
+                    </p>
+                    <div className="mt-3 text-sm text-gray-600 space-y-2">
+                      <p>Quantity: <span className="font-medium text-gray-800">{item?.quantity || 0}</span></p>
+                      <p>Size: <span className="font-medium text-gray-800">{item?.size || "-"}</span></p>
+                      <p>Color: <span className="font-medium text-gray-800">{item?.color?.name || "-"}</span></p>
+                      <p>SKU: <span className="font-medium text-gray-800">{item?.color?.sku || "-"}</span></p>
+                      <p>HSN: <span className="font-medium text-gray-800">{item?.productId?.hsn || "-"}</span></p>
+                      <p>Price: <span className="font-semibold text-gray-900">₹ {item?.productId?.salePrice || item?.productId?.price || item?.price || 0}</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </SheetContent>
   );
 };
