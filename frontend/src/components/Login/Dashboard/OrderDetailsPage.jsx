@@ -234,7 +234,7 @@ const OrderDetailsPage = () => {
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
-									<DeliveryStatus status={orderbyid?.status} />
+									<DeliveryStatus status={orderbyid?.status} scans={orderbyid?.scans?.length ? orderbyid.scans : orderbyid?.tracking_Activity} />
 									{orderbyid?.trackingUrl && (
 										<div className="mt-4 p-4 bg-muted/50 rounded-lg flex items-center justify-between">
 											<div className="flex items-center gap-2 text-sm">

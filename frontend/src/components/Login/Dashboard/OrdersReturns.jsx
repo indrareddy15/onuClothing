@@ -4,7 +4,7 @@ import { fetchAllOrders } from '../../../action/orderaction';
 import { useNavigate } from 'react-router-dom';
 import { useEncryptionDecryptionContext } from '../../../Contaxt/EncryptionContext';
 import { ORDER_ENCRYPTION_SECREAT_KEY, formattedSalePrice } from '../../../config';
-import { ChevronRight, ShoppingBag, Calendar, Package, Filter } from 'lucide-react';
+import { ChevronRight, ShoppingBag, Calendar, Package, Filter, ChevronLeft, ArrowRight } from 'lucide-react';
 import DeliveryStatusAllOrders from './DeliveryStatusAllOrders';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../ui/card';
@@ -46,59 +46,82 @@ const OrderCard = ({ order, onViewDetails }) => {
     return (
         <div
             onClick={() => onViewDetails(order)}
-            className="group flex flex-col sm:flex-row gap-6 p-6 border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer bg-card"
+            className="group flex flex-col p-4 sm:p-5 border border-border rounded-xl hover:border-primary/50 hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] transition-all cursor-pointer bg-card overflow-hidden"
         >
-            {/* Image Section */}
-            <div className="flex-shrink-0">
-                <LazyLoadImage
-                    effect='blur'
-                    wrapperProps={{ style: { transitionDelay: "0.5s" } }}
-                    placeholder={<div className="w-24 h-24 bg-muted animate-pulse rounded-lg"></div>}
-                    src={order?.orderItems[0]?.color?.images[0]?.url}
-                    alt="Order Item"
-                    className="w-24 h-24 object-cover rounded-lg border border-border"
-                />
-            </div>
-
-            {/* Details Section */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                        <span className="font-bold text-lg text-foreground">Order #{order?.order_id}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="w-4 h-4" />
-                        {order?.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Date N/A'}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Package className="w-4 h-4" />
-                        {order?.orderItems?.length || 0} Items
-                    </div>
+            <div className="flex flex-row gap-3 sm:gap-5">
+                {/* Image Section */}
+                <div className="flex-shrink-0">
+                    <LazyLoadImage
+                        effect='blur'
+                        wrapperProps={{ style: { transitionDelay: "0.2s" } }}
+                        placeholder={<div className="w-20 h-20 sm:w-24 sm:h-24 bg-muted animate-pulse rounded-lg"></div>}
+                        src={order?.orderItems?.[0]?.color?.images?.[0]?.url || ''}
+                        alt="Order Item"
+                        className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-border/50 shadow-sm"
+                    />
                 </div>
 
-                <div className="flex flex-col justify-between items-start md:items-end space-y-2">
-                    <Badge className={`capitalize px-3 py-1 ${getStatusColorClass(order?.status)}`} variant="outline">
-                        {order?.status}
-                    </Badge>
-                    <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Total Amount</p>
-                        <p className="text-lg font-bold text-foreground">
-                            ₹{formattedSalePrice(order?.TotalAmount || order?.totalPrice)}
-                        </p>
+                {/* Details Section */}
+                <div className="flex flex-col flex-1 min-w-0 justify-between py-0.5">
+                    <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 mb-1">
+                            <span className="font-bold text-sm sm:text-base md:text-lg text-foreground truncate">
+                                Order #{order?.order_id}
+                            </span>
+                            <Badge className={`w-fit capitalize px-2 py-0.5 text-[10px] sm:text-xs whitespace-nowrap ${getStatusColorClass(order?.status)}`} variant="outline">
+                                {order?.status}
+                            </Badge>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-3 mt-2 text-xs sm:text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1.5 truncate">
+                                <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span className="truncate">
+                                    {order?.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date N/A'}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Package className="w-3.5 h-3.5 flex-shrink-0" />
+                                {order?.orderItems?.length || 0} {order?.orderItems?.length === 1 ? 'Item' : 'Items'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="hidden sm:flex justify-between items-end mt-2 pt-2 border-t border-border/50">
+                        <div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Amount</p>
+                            <p className="text-sm sm:text-base font-bold text-foreground">
+                                ₹{formattedSalePrice(order?.TotalAmount || order?.totalPrice)}
+                            </p>
+                        </div>
+                        <Button variant="ghost" size="sm" className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10 h-8 px-3">
+                            <span className="text-xs font-medium">View Details</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </Button>
                     </div>
                 </div>
             </div>
 
-            {/* Action Section (Desktop) */}
-            <div className="hidden sm:flex items-center justify-center pl-4 border-l border-border">
-                <Button variant="ghost" size="icon" className="text-muted-foreground group-hover:text-primary">
-                    <ChevronRight className="w-6 h-6" />
+            {/* Mobile Price & Action Section */}
+            <div className="flex sm:hidden justify-between items-center mt-3 pt-3 border-t border-border/50">
+                <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total</p>
+                    <p className="text-sm font-bold text-foreground">
+                        ₹{formattedSalePrice(order?.TotalAmount || order?.totalPrice)}
+                    </p>
+                </div>
+                <Button variant="ghost" size="sm" className="gap-1 text-primary hover:text-primary hover:bg-primary/10 h-8 px-2">
+                    <span className="text-xs font-medium">Details</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
             </div>
+
             {/* Delivery Status Bar */}
-            <div className="w-full sm:hidden pt-4 border-t border-border">
-                <DeliveryStatusAllOrders status={order?.status} hiddenText={true} />
-            </div>
+            {order?.status !== 'Cancelled' && order?.status !== 'Returned' && (
+                <div className="w-full mt-3 pt-3 border-t border-border/50 sm:block">
+                    <DeliveryStatusAllOrders status={order?.status} hiddenText={true} />
+                </div>
+            )}
         </div>
     );
 };
@@ -177,7 +200,21 @@ const OrdersReturns = () => {
         return orders;
     };
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 5;
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter, statusFilter, sort]);
+
     const ordersToDisplay = filteredOrders();
+    const totalPages = Math.ceil((ordersToDisplay?.length || 0) / ITEMS_PER_PAGE);
+    
+    const paginatedOrders = ordersToDisplay.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     return (
         <Card className="border-border bg-card">
@@ -243,13 +280,18 @@ const OrdersReturns = () => {
                 {orderLoading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="p-4 border border-border rounded-lg space-y-3 bg-card">
+                            <div key={i} className="p-4 sm:p-5 border border-border rounded-xl space-y-4 bg-card">
                                 <div className="flex gap-4">
-                                    <Skeleton className="w-24 h-24 rounded-md bg-muted" />
-                                    <div className="flex-1 space-y-2">
-                                        <Skeleton className="h-5 w-1/3 bg-muted" />
-                                        <Skeleton className="h-4 w-1/4 bg-muted" />
-                                        <Skeleton className="h-4 w-1/2 bg-muted" />
+                                    <Skeleton className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-muted" />
+                                    <div className="flex-1 space-y-3 py-1">
+                                        <div className="flex justify-between items-start">
+                                            <Skeleton className="h-5 sm:h-6 w-1/3 bg-muted" />
+                                            <Skeleton className="h-5 w-20 bg-muted rounded-full" />
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <Skeleton className="h-4 w-3/4 bg-muted" />
+                                            <Skeleton className="h-4 w-1/2 bg-muted" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -257,24 +299,65 @@ const OrdersReturns = () => {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {ordersToDisplay && ordersToDisplay.length > 0 ? (
-                            ordersToDisplay.map((order, index) => (
-                                <OrderCard
-                                    key={index}
-                                    order={order}
-                                    onViewDetails={handleViewDetails}
-                                />
-                            ))
+                        {paginatedOrders && paginatedOrders.length > 0 ? (
+                            <>
+                                {paginatedOrders.map((order, index) => (
+                                    <OrderCard
+                                        key={order._id || index}
+                                        order={order}
+                                        onViewDetails={handleViewDetails}
+                                    />
+                                ))}
+
+                                {/* Pagination Controls */}
+                                {totalPages > 1 && (
+                                    <div className="flex items-center justify-between border-t border-border pt-6 mt-6">
+                                        <p className="text-sm text-muted-foreground hidden sm:block">
+                                            Showing <span className="font-medium text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to <span className="font-medium text-foreground">{Math.min(currentPage * ITEMS_PER_PAGE, ordersToDisplay.length)}</span> of <span className="font-medium text-foreground">{ordersToDisplay.length}</span> results
+                                        </p>
+                                        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                disabled={currentPage === 1}
+                                                className="gap-1 h-9"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                                <span className="hidden sm:inline">Previous</span>
+                                            </Button>
+                                            <span className="text-sm font-medium text-foreground px-4 py-1.5 rounded-md bg-muted/50 border border-border">
+                                                Page {currentPage} of {totalPages}
+                                            </span>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                                disabled={currentPage === totalPages}
+                                                className="gap-1 h-9"
+                                            >
+                                                <span className="hidden sm:inline">Next</span>
+                                                <ChevronRight className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         ) : (
-                            <div className="text-center py-12 text-muted-foreground bg-muted/30 rounded-lg border border-dashed border-border">
-                                <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-                                <p>No orders found matching your criteria.</p>
+                            <div className="text-center py-16 px-4 bg-muted/20 rounded-xl border border-dashed border-border/60">
+                                <div className="bg-background w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-border/50">
+                                    <ShoppingBag className="w-8 h-8 text-muted-foreground/60" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-foreground mb-2">No orders found</h3>
+                                <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
+                                    We couldn't find any orders matching your current filter criteria.
+                                </p>
                                 <Button
-                                    variant="link"
+                                    variant="default"
                                     onClick={() => { setFilter('all'); setStatusFilter('all'); }}
-                                    className="mt-4 text-primary"
+                                    className="shadow-sm"
                                 >
-                                    Clear Filters
+                                    Clear All Filters
                                 </Button>
                             </div>
                         )}

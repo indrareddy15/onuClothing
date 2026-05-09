@@ -103,6 +103,10 @@ export const updateOrderStatusFromShipRokcet = async (req, res) => {
         dbOrder.status = statusLabel;
         dbOrder.current_status = statusLabel;
 
+        if (body.scans && Array.isArray(body.scans)) {
+            dbOrder.scans = body.scans;
+        }
+
         await dbOrder.save();
 
         if (lastStatus !== dbOrder.status) {
