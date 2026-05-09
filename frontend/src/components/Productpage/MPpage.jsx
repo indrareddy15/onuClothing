@@ -1,5 +1,5 @@
 import React, { useEffect, Fragment, useState, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkPurchasesProductToRate, postRating, singleProduct } from '../../action/productaction';
 import { createbag, createwishlist, clearErrors } from '../../action/orderaction';
@@ -452,8 +452,8 @@ const MPpage = () => {
 				{/* Features */}
 				<div className="grid grid-cols-1 gap-3 py-6 border-t">
 					<div className="flex items-center gap-3 text-sm text-gray-600">
-						<RotateCw className="w-5 h-5" />
-						<span>Return within 7 days of purchase. Duties & taxes are non-refundable.</span>
+						<RotateCw className="w-5 h-5 text-primary" />
+						<span>Return or exchange within 7 days. <Link to="/returnPolicy" className="text-primary font-medium underline">Policy</Link></span>
 					</div>
 					<div className="flex items-center gap-3 text-sm text-gray-600">
 						<Package className="w-5 h-5" />

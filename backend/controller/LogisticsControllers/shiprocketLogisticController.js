@@ -809,6 +809,11 @@ export const generateOrderReturnShipment = async (shipmentData, userId) => {
             units: item.quantity,
             discount: item?.productId?.DiscountedPercentage || 0,
             qc_enable: true,
+            qc_product_name: item?.productId?.title,
+            qc_product_image: item?.color?.images?.[0]?.url || item?.productId?.image,
+            qc_brand: item?.productId?.brand || "On U",
+            qc_color: item?.color?.name,
+            qc_size: item?.size?.label || item?.size,
             sku: item?.color?.sku,
             tax: item?.productId?.gst || 0,
             hsn: item?.productId?.hsn || generateRandomId().toString()
@@ -833,8 +838,8 @@ export const generateOrderReturnShipment = async (shipmentData, userId) => {
             channel_id: resolveShiprocketChannelId(shipmentData.channel_id),
             category: "Clothes",
             pickup_isd_code: "+91",
-            pickup_customer_name: shipmentData.address.Firstname || shipmentData.address.FirstName,
-            pickup_last_name: shipmentData.address.Lastname,
+            pickup_customer_name: (shipmentData.address.Firstname || shipmentData.address.FirstName || shipmentData.address.name || 'Customer').substring(0, 50).trim(),
+            pickup_last_name: (shipmentData.address.Lastname || (shipmentData.address.name && shipmentData.address.name.includes(' ') ? shipmentData.address.name.split(' ').slice(1).join(' ') : '.')).substring(0, 50).trim(),
             pickup_address: shipmentData.address.address1,
             pickup_city: shipmentData.address.address2,
             pickup_pincode: shipmentData.address.pincode,
@@ -871,42 +876,20 @@ export const generateOrderReturnShipment = async (shipmentData, userId) => {
 
 
         console.log("Return Shipment Created Response: ", response.data);
-        const returnResponseData = response.data;
-        const pickup_locations = await getPickUpLocation();
-        const primaryLocation = pickup_locations.find(loc => loc.is_primary_location);
-        console.log("Pickup Locations: : ", pickup_locations);
-        const allAvailableCourier = await getOrderReturnServicesablity({
-            pickup_postcode: shipmentData.address.pincode,
-            delivery_postcode: primaryLocation?.pin_code,
-            cod: shipmentData.paymentMode === 'prepaid' ? 0 : 1,
-            weight: totalOrderWeight,
-            is_return: 1,
-        });
-        let dataToSend = null;
-        if (allAvailableCourier) {
-            dataToSend = getStringFromObject(allAvailableCourier);
-        }
-        // console.log("Avaialbele Couriors",allAvailableCourier);
-        /* let bestCourier = allAvailableCourier?.available_courier_companies[0];
-        if(allAvailableCourier && allAvailableCourier.available_courier_companies.length > 0){
-            bestCourier = allAvailableCourier?.available_courier_companies[0];
-        }
-        console.log('Best Crourior: ',bestCourier); */
-        /* const result = await generateReturnAwb({
-            shipment_id:returnResponseData.shipment_id,
-            courier_id:bestCourier?.courier_company_id,
-            status:returnResponseData.status,
-            is_return:1,
-        }); */
-        // console.log("Return Awb Response Result: ",result);
-        if (allAvailableCourier) {
-            return { ...returnResponseData, ['Return Result Message']: dataToSend };
-        } else {
-            return returnResponseData;
-        }
+        return response.data;
     } catch (error) {
         console.error("Error creating return shipment:", error?.response?.data || error.message);
-        logger.error(`Error creating return shipment: ${error?.response?.data || error.message}`);
+        logger.error(`Error creating return shipment: ${JSON.stringify(error?.response?.data || error.message)}`);
+        
+        // Return the error data so the controller can provide better feedback
+        if (error.response && error.response.data) {
+            return {
+                success: false,
+                shiprocketError: true,
+                message: error.response.data.message || "Shiprocket validation failed",
+                errors: error.response.data.errors
+            };
+        }
         return null;
     }
 };

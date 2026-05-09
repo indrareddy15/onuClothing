@@ -28,6 +28,7 @@ import OrderDetailsPage from "./components/Login/Dashboard/OrderDetailsPage";
 import FAQ from "./components/Website_HelpSupport/FAQ";
 import TermsAndConditions from "./components/Website_HelpSupport/TermsAndConditions";
 import PrivacyPolicy from "./components/Website_HelpSupport/PrivacyPolicy";
+import ReturnRefundPolicy from "./components/Website_HelpSupport/ReturnRefundPolicy";
 // import { Toaster } from "./components/ui/toaster";
 import CheckoutPage from "./components/Bag/NewCheckoutPage";
 import NotFoundPage from "./NotFoundPage";
@@ -146,6 +147,7 @@ function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/tc" element={<TermsAndConditions />} />
         <Route path="/privacyPolicy" element={<PrivacyPolicy />} />
+        <Route path="/returnPolicy" element={<ReturnRefundPolicy />} />
 
         {/* Product Pages */}
         <Route path="/products" element={<Allproductpage user={user} />} />

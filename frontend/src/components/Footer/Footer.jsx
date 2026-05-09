@@ -218,6 +218,7 @@ const Footer = () => {
 									<li><Link to="/faq" className="hover:text-black transition-colors">FAQ</Link></li>
 									<li><Link to="/tc" className="hover:text-black transition-colors">Terms & Conditions</Link></li>
 									<li><Link to="/privacyPolicy" className="hover:text-black transition-colors">Privacy Policy</Link></li>
+									<li><Link to="/returnPolicy" className="hover:text-black transition-colors">Return & Refund Policy</Link></li>
 									<li><Link to="/dashboard" className="hover:text-black transition-colors">Orders & Returns</Link></li>
 									<li><Link to="/dashboard" className="hover:text-black transition-colors">Track Your Order</Link></li>
 								</ul>
@@ -270,6 +271,7 @@ const Footer = () => {
 									<li><Link to="/faq" className="block py-1">FAQ</Link></li>
 									<li><Link to="/tc" className="block py-1">Terms & Conditions</Link></li>
 									<li><Link to="/privacyPolicy" className="block py-1">Privacy Policy</Link></li>
+									<li><Link to="/returnPolicy" className="block py-1">Return & Refund Policy</Link></li>
 									<li><Link to="/dashboard" className="block py-1">Orders & Returns</Link></li>
 									<li><Link to="/dashboard" className="block py-1">Track Your Order</Link></li>
 								</ul>

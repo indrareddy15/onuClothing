@@ -1820,12 +1820,49 @@ export const returnOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: "User ID is required" });
         }
         const order = await OrderModel.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        // Validation: Must be delivered to return
+        if (order.status.toLowerCase() !== 'delivered') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Return can only be requested for delivered orders." 
+            });
+        }
+
+        // Validation: 40-day return policy (Changed from 7 for testing)
+        const deliveredScan = order.scans?.find(scan => 
+            (scan.activity || scan.status || "").toLowerCase().includes('delivered')
+        );
+
+        const deliveryDate = deliveredScan ? new Date(deliveredScan.date) : new Date(order.updatedAt);
+        const currentDate = new Date();
+        const diffInDays = Math.floor((currentDate - deliveryDate) / (1000 * 60 * 60 * 24));
+
+        if (diffInDays > 7) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Return window has expired. Returns are only allowed within 7 days of delivery." 
+            });
+        }
+
         const returnSuccess = await generateOrderReturnShipment(order, userId);
         console.log("Return Order Success: ", returnSuccess);
-        if (!returnSuccess) {
-            return res.status(400).json({ success: false, message: "Failed to create returned order", result: null });
+        
+        if (!returnSuccess || returnSuccess.shiprocketError) {
+            const errorMessage = returnSuccess?.message || "Failed to create returned order";
+            const detailedErrors = returnSuccess?.errors ? Object.values(returnSuccess.errors).flat().join(", ") : null;
+            
+            return res.status(400).json({ 
+                success: false, 
+                message: detailedErrors ? `${errorMessage}: ${detailedErrors}` : errorMessage,
+                result: returnSuccess 
+            });
         }
-        order.status = returnSuccess.status;
+        
+        order.status = returnSuccess.status || 'Returned';
         order.shipment_status = returnSuccess.status_code;
         order.current_status = getStatusDescription(returnSuccess.status_code)
         order.IsReturning = true;

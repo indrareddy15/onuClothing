@@ -65,6 +65,12 @@ const ReturnsOptionsWindow = ({ OnSubmit, OnClose }) => {
 					</button>
 				</div>
 
+				<div className="mb-6 p-3 bg-primary/5 border border-primary/10 rounded-lg">
+					<p className="text-xs text-muted-foreground leading-relaxed">
+						<span className="font-semibold text-primary">Return Policy:</span> Items must be unused, unwashed, and in original condition with tags. Requests must be made within <span className="font-bold">7 days</span> of delivery.
+					</p>
+				</div>
+
 				<div className="mb-6">
 					<div className="flex p-1 bg-muted rounded-lg">
 						<button

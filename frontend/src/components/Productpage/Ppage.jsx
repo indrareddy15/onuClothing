@@ -1,5 +1,5 @@
 import React, { useEffect, Fragment, useState, useMemo, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkPurchasesProductToRate, postRating, singleProduct } from '../../action/productaction';
 import { createbag, createwishlist, clearErrors } from '../../action/orderaction';
@@ -545,6 +545,20 @@ const Ppage = () => {
                             <div className="text-center">
                                 <Shield className="w-6 h-6 mx-auto mb-2 text-gray-600" />
                                 <p className="text-xs text-gray-600">Secure Payment</p>
+                            </div>
+                        </div>
+
+                        {/* Return Policy Snippet */}
+                        <div className="bg-muted/30 rounded-xl p-4 border border-dashed border-border mt-6">
+                            <div className="flex items-start gap-3">
+                                <RefreshCw className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                                <div>
+                                    <h4 className="text-sm font-semibold text-foreground">40-Day Easy Returns</h4>
+                                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                        Not happy with your fit? Return or exchange within 7 days of delivery. 
+                                        <Link to="/returnPolicy" className="text-primary hover:underline ml-1 font-medium">Read Policy</Link>
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
