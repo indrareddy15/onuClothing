@@ -1,12 +1,61 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShoppingBag, Heart, Eye } from "lucide-react";
 import { formattedSalePrice } from "../../config";
 import { LazyLoadImage } from "react-lazy-load-image-component";
+import { useEncryptionDecryptionContext } from "../../Contaxt/EncryptionContext";
+import { useSessionStorage } from "../../Contaxt/SessionStorageContext";
+import { useDispatch } from "react-redux";
+import { createwishlist } from "../../action/orderaction";
+import { useServerWishList } from "../../Contaxt/ServerWishListContext";
+import { useServerAuth } from "../../Contaxt/AuthContext";
+import { useSettingsContext } from "../../Contaxt/SettingsContext";
 
 const ModernProductCard = ({ product }) => {
+    const { encrypt } = useEncryptionDecryptionContext();
+    const { updateRecentlyViewProducts, sessionData } = useSessionStorage();
+    const { wishlist, fetchWishList } = useServerWishList();
+    const { user } = useServerAuth();
+    const { checkAndCreateToast } = useSettingsContext();
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+
     const [isHovered, setIsHovered] = useState(false);
+    const [isWishlisted, setIsWishlisted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Check wishlist status
+    useEffect(() => {
+        if (user && wishlist?.orderItems) {
+            setIsWishlisted(wishlist.orderItems.some(w => w.productId?._id === product?._id));
+        } else if (!user) {
+            setIsWishlisted(sessionData.some(b => b.productId?._id === product?._id));
+        }
+    }, [user, wishlist, product, sessionData]);
+
+    const handleProductClick = () => {
+        const encryptedId = encrypt(product._id);
+        updateRecentlyViewProducts(product);
+        navigate(`/products/${encryptedId}`);
+    };
+
+    const handleWishlistToggle = async (e) => {
+        e.stopPropagation();
+        setIsLoading(true);
+        try {
+            if (user) {
+                await dispatch(createwishlist({ productId: product._id }));
+                await fetchWishList();
+                checkAndCreateToast('success', isWishlisted ? 'Removed from wishlist' : 'Added to wishlist');
+            } else {
+                checkAndCreateToast('warning', 'Please login to add items to wishlist');
+            }
+        } catch (error) {
+            checkAndCreateToast('error', 'Something went wrong');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // Get images
     let images = product?.images;
@@ -29,7 +78,7 @@ const ModernProductCard = ({ product }) => {
             className="group relative w-full cursor-pointer"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            onClick={() => navigate(`/products/${product._id}`)}
+            onClick={handleProductClick}
         >
             {/* Image Container */}
             <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-gray-100">
@@ -76,21 +125,24 @@ const ModernProductCard = ({ product }) => {
         `}>
                     <button
                         className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-black hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); /* Add to cart logic */ }}
+                        onClick={(e) => { e.stopPropagation(); handleProductClick(); }}
                         title="Add to Cart"
                     >
                         <ShoppingBag size={18} />
                     </button>
                     <button
-                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-black hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); /* Wishlist logic */ }}
-                        title="Add to Wishlist"
+                        className={`flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-colors ${
+                            isWishlisted ? "bg-red-500 text-white" : "bg-white text-black hover:bg-black hover:text-white"
+                        }`}
+                        onClick={handleWishlistToggle}
+                        disabled={isLoading}
+                        title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
                     >
-                        <Heart size={18} />
+                        <Heart size={18} className={isWishlisted ? "fill-current" : ""} />
                     </button>
                     <button
                         className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-black hover:text-white transition-colors"
-                        onClick={(e) => { e.stopPropagation(); navigate(`/products/${product._id}`) }}
+                        onClick={(e) => { e.stopPropagation(); handleProductClick(); }}
                         title="Quick View"
                     >
                         <Eye size={18} />
