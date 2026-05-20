@@ -1,4 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
+import { useState } from "react";
+
 // import { Route, Routes } from "react-router-dom";
 // import AdminViewLayout from "./components/admin-view/layout";
 // import AdminDashboard from "./pages/admin-view/AdminDashboard";
@@ -130,6 +132,16 @@
 // export default App;
 
 export default function App() {
+  const [showModal, setShowModal] = useState(false);
+
+  const handleContactClick = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-black flex items-center justify-center px-4">
       {/* Main Message Container */}
@@ -170,12 +182,7 @@ export default function App() {
 
         {/* Contact Button */}
         <button
-          onClick={() => {
-            // Developer contact action
-            alert(
-              "Please contact the Developer for assistance — the payment is still playing hide and seek with the developer 😂",
-            );
-          }}
+          onClick={handleContactClick}
           className="inline-block px-8 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition duration-300 ease-in-out transform hover:scale-105 shadow-lg"
         >
           Contact Developer
@@ -187,6 +194,69 @@ export default function App() {
           Developer 😅
         </p>
       </div>
+
+      {/* Modal Popup */}
+      {showModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center px-4 z-50"
+          onClick={handleCloseModal}
+        >
+          {/* Modal Content */}
+          <div
+            className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <div className="sticky top-0 flex justify-end p-4 bg-gray-50 border-b">
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-8 text-center">
+              {/* Image */}
+              <div className="mb-8">
+                <img
+                  src="/image.png"
+                  alt="Developer"
+                  className="w-full h-auto rounded-lg shadow-md object-contain"
+                />
+              </div>
+
+              {/* Content */}
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-slate-800">
+                  Payment Not Found 😂
+                </h2>
+
+                <p className="text-gray-600 leading-relaxed">
+                  The payment is still playing hide and seek with the developer!
+                </p>
+
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 text-left">
+                  <p className="text-sm text-red-700 font-semibold">
+                    Developer Contact Information:
+                  </p>
+                  <p className="text-sm text-red-600 mt-2">
+                    Email: developer@onuclothing.com
+                  </p>
+                  <p className="text-sm text-red-600">
+                    Status: Still Debugging... 🔧
+                  </p>
+                </div>
+
+                <p className="text-xs text-gray-500 italic">
+                  Come back later or send a coffee ☕ to speed up the process!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
