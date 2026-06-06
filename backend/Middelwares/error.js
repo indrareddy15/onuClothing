@@ -1,8 +1,15 @@
-import ErrorHandler from '../utilis/errorhandel.js';
+import ErrorHandler from '../utility/errorhandel.js';
 
 export default(err, req, res, next)=>{
     err.statusCode = err.statusCode || 500;
     err.message = err.message || "Internal Server Error";
+
+    // Multer file size limit error
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        const limitMb = (process.env.MAX_FILE_SIZE ? parseInt(process.env.MAX_FILE_SIZE, 10) : 52428800) / (1024 * 1024);
+        err.statusCode = 413;
+        err.message = `File too large. Maximum size allowed is ${limitMb}MB.`;
+    }
 
     if(err.name === 'casterror'){
         const message = `resource not found .invalid ${err?.path}`;

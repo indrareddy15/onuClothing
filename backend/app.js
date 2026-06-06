@@ -11,15 +11,16 @@ import Order from './routes/orderroutes.js';
 import paymentRoutes from './routes/payment.route.js';
 import razorPayRoute from './routes/razorPayPayment.route.js';
 import shipRocketHookRoute from './routes/logisticRoutes.js';
+import errorMiddleware from './Middelwares/error.js';
 
 // Fix for TLS certificate issues with Cloudinary uploads
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // Only for development - use proper certificates in production
 
 const app = express();
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: process.env.MAX_JSON_LIMIT || '10mb' }));
 app.use(cookieParser());
-app.use(bodyparser.urlencoded({ limit: '10mb', extended: true }));
+app.use(bodyparser.urlencoded({ limit: process.env.MAX_URLENCODED_LIMIT || '10mb', extended: true }));
 
 // Allowed origins (ensure these are correct)
 const allowedOrigins = [
@@ -85,6 +86,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/payment/razorpay', razorPayRoute);
 app.use('/api/logistic', shipRocketHookRoute);
 
-
+// Error handling middleware (must be registered last)
+app.use(errorMiddleware);
 
 export default app;

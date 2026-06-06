@@ -91,6 +91,7 @@ const AdminProducts = () => {
 
     const [categories, setCategories] = useState([]);
     const [subcategories, setSubcategories] = useState([]);
+    const [genders, setGenders] = useState([]);
     const [specialCategories, setSpecialCategories] = useState([]);
 
     useEffect(() => {
@@ -102,6 +103,7 @@ const AdminProducts = () => {
         if (AllOptions && AllOptions.length > 0) {
             setCategories(AllOptions.filter(item => item.type === 'category'));
             setSubcategories(AllOptions.filter(item => item.type === "subcategory"));
+            setGenders(AllOptions.filter(item => item.type === 'gender'));
             // Assuming special categories might be static or fetched differently, 
             // but for now using the static list from config if available or hardcoded
             setSpecialCategories([
@@ -348,9 +350,9 @@ const AdminProducts = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Genders</SelectItem>
-                                <SelectItem value="men">Men</SelectItem>
-                                <SelectItem value="women">Women</SelectItem>
-                                <SelectItem value="kids">Kids</SelectItem>
+                                {genders.map((gen, i) => (
+                                    <SelectItem key={i} value={gen.value}>{gen.value}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
 

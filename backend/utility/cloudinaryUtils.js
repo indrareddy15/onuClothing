@@ -62,5 +62,6 @@ async function handleMultipleImageUpload(files) {
     }
 }
 
-const upload = multer({ storage, limits: { fileSize: process.env.MAX_FILE_SIZE || 52428800 } });
+const maxFileSize = process.env.MAX_FILE_SIZE ? parseInt(process.env.MAX_FILE_SIZE, 10) : 52428800;
+const upload = multer({ storage, limits: { fileSize: maxFileSize } });
 export { handleImageUpload, handleMultipleImageUpload, upload };
