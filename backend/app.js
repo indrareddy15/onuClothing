@@ -18,9 +18,9 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // Only for development - use pr
 
 const app = express();
 
-app.use(express.json({ limit: process.env.MAX_JSON_LIMIT || '10mb' }));
+app.use(express.json({ limit: process.env.MAX_JSON_LIMIT || '100mb' }));
 app.use(cookieParser());
-app.use(bodyparser.urlencoded({ limit: process.env.MAX_URLENCODED_LIMIT || '10mb', extended: true }));
+app.use(bodyparser.urlencoded({ limit: process.env.MAX_URLENCODED_LIMIT || '100mb', extended: true }));
 
 // Allowed origins (ensure these are correct)
 const allowedOrigins = [
@@ -69,6 +69,17 @@ app.use(
 
 // Handling OPTIONS requests for preflight CORS
 app.options('*', cors());
+
+// Add payload limit error handler with CORS headers
+app.use((err, req, res, next) => {
+    if (err.status === 413 || err.message?.includes('payload')) {
+        return res.status(413).json({
+            Success: false,
+            message: 'Payload too large. Maximum file size is 50MB per file or 100MB total.'
+        });
+    }
+    next(err);
+});
 
 
 // Define the / route to send a JSON response
