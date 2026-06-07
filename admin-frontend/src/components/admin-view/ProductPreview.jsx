@@ -837,10 +837,32 @@ const SizeDisplay = ({ productId, SizesArray, OnRefresh }) => {
 			</div>
 
 			{/* Conditionally render Size Selector */}
-			{toggleAddNewSize && <SizeSelector
-				sizeType={"clothingSize"}
-				OnChange={(e) => { setNewSize(e.length > 0 ? e : null); }}
-			/>}
+			{toggleAddNewSize && (() => {
+				const productColors = [];
+				const seenColors = new Set();
+				SizesArray.forEach(s => {
+					s.colors?.forEach(c => {
+						const key = c.label || c.name;
+						if (key && !seenColors.has(key)) {
+							seenColors.add(key);
+							productColors.push({
+								id: c.id || c._id,
+								label: c.label,
+								name: c.name,
+								images: c.images || []
+							});
+						}
+					});
+				});
+				return (
+					<SizeSelector
+						sizeType="clothingSize"
+						initialColors={productColors}
+						productId={productId}
+						OnChange={(e) => { setNewSize(e.length > 0 ? e : null); }}
+					/>
+				);
+			})()}
 
 			{/* New Size Button */}
 			{toggleAddNewSize && newSize && (

@@ -709,17 +709,28 @@ export const editProduct = async (req, res) => {
         addToUpdate('weight', weight);
         addToUpdate('breadth', breadth);
 
-        // Handle 'size' field separately (calculate totalStock)
+        // Handle 'size' field separately (calculate totalStock and AllColors)
         if (size && size.length > 0) {
             let totalStock = 0;
+            const AllColors = [];
             size.forEach(s => {
                 if (s.colors) {
                     s.colors.forEach(c => {
                         totalStock += c.quantity || 0;
+                        if (c.images && c.images.length > 0) {
+                            const filteredImages = c.images.filter(image => image !== "");
+                            if (filteredImages.length > 0) {
+                                c.images = filteredImages;
+                                AllColors.push(c);
+                            }
+                        }
                     });
                 }
             });
-            if (totalStock > 0) updateFields.size = size;
+            if (totalStock > 0) {
+                updateFields.size = size;
+                updateFields.AllColors = AllColors;
+            }
             updateFields.totalStock = totalStock;
         }
         // Recalculate price and salePrice with GST
