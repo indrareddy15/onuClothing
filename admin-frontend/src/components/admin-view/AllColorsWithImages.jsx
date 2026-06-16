@@ -10,7 +10,7 @@ import { Label } from '../ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useSettingsContext } from '@/Context/SettingsContext';
 
-const AllColorsWithImages = ({ OnChangeColorsActive }) => {
+const AllColorsWithImages = ({ OnChangeColorsActive, initialColors = [] }) => {
 	const { checkAndCreateToast } = useSettingsContext();
 	const dispatch = useDispatch();
 	const [allColors, setAllColors] = useState([]);
@@ -18,6 +18,13 @@ const AllColorsWithImages = ({ OnChangeColorsActive }) => {
 	const [colorOptions, setColorOptions] = useState([]);
 	const [activeColorSelect, setActiveColorSelect] = useState(null);
 	const [rest, setOnReset] = useState(false);
+
+	// Sync with initialColors for edit mode
+	useEffect(() => {
+		if (initialColors && initialColors.length > 0 && allColors.length === 0) {
+			setAllColors(initialColors);
+		}
+	}, [initialColors]);
 
 	// Fetch color options from the store on mount
 	const fetchColorOptions = async () => {

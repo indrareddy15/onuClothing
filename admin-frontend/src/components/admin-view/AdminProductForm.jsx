@@ -378,6 +378,8 @@ export default function AdminProductForm({
                 <SizeSelector
                   sizeType="clothingSize" // Assuming clothingSize is the default type
                   initialSizes={formData.size}
+                  initialColors={formData.AllColors}
+                  productId={formData.productId}
                   OnChange={(sizes) =>
                     setFormData((prev) => ({ ...prev, size: sizes }))
                   }
