@@ -143,13 +143,14 @@ const CheckoutPage = () => {
 		// Apply Coupon Logic
 		let couponDiscount = 0;
 		if (bag?.Coupon) {
-			const { CouponType, Discount, MinOrderAmount, FreeShipping } = bag.Coupon;
+			const { CouponType, Discount, MinOrderAmount } = bag.Coupon;
 
 			if (subtotal >= MinOrderAmount) {
 				if (CouponType === "Percentage") {
 					couponDiscount = subtotal * (Discount / 100);
 				} else {
-					couponDiscount = Discount;
+					// Flat discount can never exceed the subtotal (matches server clamp).
+					couponDiscount = Math.min(Discount, subtotal);
 				}
 			}
 		}
@@ -162,7 +163,8 @@ const CheckoutPage = () => {
 			shipping = 0;
 		}
 
-		const total = subtotal - couponDiscount + shipping;
+		// Product portion is clamped at 0 before adding shipping (matches server).
+		const total = Math.max(0, subtotal - couponDiscount) + shipping;
 
 		setTotals({
 			subtotal, // This is actually Total Selling Price before coupon

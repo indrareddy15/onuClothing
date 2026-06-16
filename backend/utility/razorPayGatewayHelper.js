@@ -7,6 +7,7 @@ import { sendOrderPlacedMail } from "../controller/emailController.js";
 import WebSiteModel from "../model/websiteData.model.js";
 import PaymentOrderModel from "../model/PaymentGatway.model.js";
 import { resolveShiprocketChannelId } from "../controller/LogisticsControllers/shiprocketLogisticController.js";
+import { computeAuthoritativeTotal } from "./orderTotals.js";
 
 export const instance = new Razorpay({
     key_id: process.env.RAZOR_PG_ID,
@@ -17,11 +18,19 @@ export const createOrder = async (req, res) => {
     try {
         const userId = req.user.id;
         console.log("Payment Amount:", req.body);
-        const { amount, selectedAddress, orderDetails, totalAmount, bagId } = req.body;
+        const { selectedAddress, orderDetails, totalAmount, bagId } = req.body;
+
+        // SECURITY: never trust the client-supplied amount. Recompute the payable
+        // total from the user's bag (prices read from DB, coupon + fees applied).
+        const authoritative = await computeAuthoritativeTotal(userId);
+        if (!authoritative || authoritative.payable <= 0) {
+            return res.status(400).json({ success: false, message: "Unable to determine order amount. Your bag may be empty." });
+        }
+        const serverAmount = authoritative.payable;
 
         // Validate Razorpay credentials
         const options = {
-            amount: Number(Math.round(amount) * 100),
+            amount: Number(serverAmount * 100), // paise, server-computed
             currency: "INR",
             receipt: `order_receipt_${Date.now()}`,
             payment_capture: 1, // auto-capture payment (1) or manual (0)
@@ -397,9 +406,27 @@ export const paymentVerification = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Bag not found' });
         }
 
+        // SECURITY/HARDENING: record the exact amount Razorpay captured for this
+        // order (read back from the gateway), rather than a client value or a
+        // bag total re-derived later that could have drifted between order
+        // creation and verification. Fall back to a server recompute only if the
+        // gateway lookup fails.
+        let serverTotal;
+        try {
+            const rzpOrder = await instance.orders.fetch(razorpay_order_id);
+            if (rzpOrder && typeof rzpOrder.amount === 'number') {
+                serverTotal = Math.round(rzpOrder.amount) / 100; // paise -> rupees
+            }
+        } catch (e) {
+            console.error("Could not fetch Razorpay order for amount verification:", e?.message);
+        }
+        if (typeof serverTotal !== 'number') {
+            const authoritative = await computeAuthoritativeTotal(id);
+            serverTotal = authoritative?.payable ?? totalAmount;
+        }
+
         const alreadyPresentConvenenceFees = await WebSiteModel.findOne({ tag: 'ConvenienceFees' });
 
-        // Create the order in the database
         // Create the order in the database
         const orderData = new OrderModel({
             order_id: generateOrderId(),
@@ -412,7 +439,7 @@ export const paymentVerification = async (req, res) => {
             razorpay_order_id,
             paymentId: razorpay_payment_id,
             address: selectedAddress,
-            TotalAmount: totalAmount,
+            TotalAmount: serverTotal,
             paymentMode: "prepaid",
             status: 'Pending Acceptance',
             current_status: 'Pending Acceptance',

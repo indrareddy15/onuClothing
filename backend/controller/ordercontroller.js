@@ -19,6 +19,7 @@ import {
     resolveShiprocketChannelId
 } from './LogisticsControllers/shiprocketLogisticController.js'
 import { getStatusDescription } from '../utility/basicUtils.js'
+import { computeAuthoritativeTotal } from '../utility/orderTotals.js'
 import User from '../model/usermodel.js'
 
 export const MANUAL_ACCEPTANCE_STATUS = 'Pending Acceptance';
@@ -79,6 +80,9 @@ export const verifyPayment = async (req, res) => {
             if (bagData) {
                 // console.log("Bag Data: ", bagData);
                 const addressString = Object.values(SelectedAddress).join(", ");
+                // SECURITY: store the server-computed total, not the client-supplied one.
+                const authoritative = await computeAuthoritativeTotal(req.user.id);
+                const serverTotal = authoritative?.payable ?? totalAmount;
                 // Create new order
                 const orderData = new OrderModel({
                     userId: req.user.id,
@@ -86,7 +90,7 @@ export const verifyPayment = async (req, res) => {
                     address: SelectedAddress, // Save complete address object for logistics
                     order_id: paymentData.order_id, // Save the consistent order_id generated
                     ConveenianceFees: alreadyPresentConvenenceFees?.ConvenienceFees || 0,
-                    TotalAmount: totalAmount,
+                    TotalAmount: serverTotal,
                     paymentMode: paymentStatus[0].payment_group,
                     status: 'Order Confirmed',
                     razorpay_order_id: paymentData.order_id, // Store for compatibility if needed
@@ -436,6 +440,14 @@ export const createOrder = async (req, res) => {
         // Convenience Fees generation
         const alreadyPresentConvenienceFees = await WebSiteModel.findOne({ tag: 'ConvenienceFees' });
 
+        // SECURITY: never trust the client-supplied TotalAmount. Recompute the
+        // payable amount from the user's bag (prices read from DB, coupon + fees applied).
+        const authoritative = await computeAuthoritativeTotal(req.user.id);
+        if (!authoritative || authoritative.payable <= 0) {
+            return res.status(400).json({ success: false, message: "Unable to determine order amount. Your bag may be empty." });
+        }
+        const serverTotal = authoritative.payable;
+
         // Create order entry in the database
         const orderData = new OrderModel({
             order_id: `ONU-${Date.now()}`,
@@ -446,7 +458,7 @@ export const createOrder = async (req, res) => {
             ConveenianceFees: alreadyPresentConvenienceFees?.ConvenienceFees || ConvenienceFees || 0,
             orderItems: processingProducts,
             address: Address,
-            TotalAmount,
+            TotalAmount: serverTotal,
             paymentMode: paymentMode || 'COD',
             status: MANUAL_ACCEPTANCE_STATUS,
             current_status: MANUAL_ACCEPTANCE_STATUS,

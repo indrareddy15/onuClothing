@@ -60,8 +60,32 @@ async function findOrderForWebhook(body) {
     return null;
 }
 
+/**
+ * Verify the Shiprocket webhook caller. Shiprocket sends the token configured in
+ * its dashboard (Settings → API → Webhooks) in the `x-api-key` header.
+ * - If SHIPROCKET_WEBHOOK_TOKEN is set, the token MUST match (else reject 401).
+ * - If it is not set, the request is processed but a loud warning is logged so
+ *   the integration is never silently left open in production.
+ */
+function isWebhookAuthorized(req) {
+    const expected = process.env.SHIPROCKET_WEBHOOK_TOKEN;
+    if (!expected) {
+        logger.warn("Shiprocket webhook is UNAUTHENTICATED: set SHIPROCKET_WEBHOOK_TOKEN and configure it in the Shiprocket dashboard (x-api-key).");
+        return true;
+    }
+    const provided =
+        req.headers["x-api-key"] ||
+        req.headers["x-webhook-token"] ||
+        (req.headers["authorization"] || "").replace(/^Bearer\s+/i, "");
+    return provided === expected;
+}
+
 export const updateOrderStatusFromShipRokcet = async (req, res) => {
     try {
+        if (!isWebhookAuthorized(req)) {
+            logger.warn("Shiprocket webhook rejected: invalid or missing x-api-key token");
+            return res.status(401).send("Unauthorized");
+        }
         const body = flattenWebhookBody(req.body);
         logger.info(`Shiprocket webhook received keys=${Object.keys(body).join(",")}`);
 

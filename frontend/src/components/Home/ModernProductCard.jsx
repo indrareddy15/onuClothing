@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, Heart, Eye } from "lucide-react";
+import { ShoppingBag, Heart, Eye, Star } from "lucide-react";
 import { formattedSalePrice } from "../../config";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { useEncryptionDecryptionContext } from "../../Contaxt/EncryptionContext";
@@ -72,6 +72,15 @@ const ModernProductCard = ({ product }) => {
     const discount = product.salePrice > 0
         ? Math.round(((product.price - product.salePrice) / product.price) * 100)
         : 0;
+
+    // Derive a display rating (social proof) without any new data fetch.
+    const ratingCount = Array.isArray(product?.Rating) ? product.Rating.length : 0;
+    const ratingValue = Number(product?.averageRating) > 0
+        ? Number(product.averageRating)
+        : (ratingCount > 0
+            ? product.Rating.reduce((a, r) => a + (Number(r?.rating) || 0), 0) / ratingCount
+            : 0);
+    const hasRating = ratingValue > 0;
 
     return (
         <div
@@ -152,9 +161,20 @@ const ModernProductCard = ({ product }) => {
 
             {/* Product Info */}
             <div className="mt-4 space-y-1">
-                <h3 className="text-sm font-medium text-gray-900 line-clamp-1 group-hover:text-gray-600 transition-colors">
-                    {product.title}
-                </h3>
+                <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-medium text-gray-900 line-clamp-1 group-hover:text-gray-600 transition-colors">
+                        {product.title}
+                    </h3>
+                    {hasRating && (
+                        <span
+                            className="flex shrink-0 items-center gap-1 rounded-full bg-gray-900 px-1.5 py-0.5 text-[10px] font-bold text-white"
+                            aria-label={`Rated ${ratingValue.toFixed(1)} out of 5`}
+                        >
+                            <Star size={9} className="fill-current" aria-hidden="true" />
+                            {ratingValue.toFixed(1)}
+                        </span>
+                    )}
+                </div>
                 <div className="flex items-center gap-2">
                     {product.salePrice > 0 ? (
                         <>

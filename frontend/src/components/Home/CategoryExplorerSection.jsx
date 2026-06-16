@@ -9,28 +9,24 @@ const CategoryExplorerSection = ({ categories }) => {
   if (!categories || categories.length === 0) return null;
 
   return (
-    <section className="w-full py-24 bg-gradient-to-br from-neutral-50 via-white to-neutral-50 relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-gradient-to-br from-purple-100/40 to-pink-100/40 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-100/40 to-cyan-100/40 rounded-full blur-3xl" />
-
+    <section className="w-full py-16 md:py-24 bg-[#FAFAF9] relative overflow-hidden">
       <div className="max-w-screen-2xl mx-auto px-4 relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-bold uppercase tracking-widest mb-6">
-            <Sparkles size={14} />
+        <div className="text-center mb-12 md:mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900 text-white text-[10px] font-bold uppercase tracking-[0.18em] mb-5">
+            <Sparkles size={12} />
             <span>Explore Categories</span>
           </div>
-          <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-600 to-gray-900 uppercase leading-[0.9]">
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-gray-900 uppercase leading-[0.95]">
             Find Your Vibe
           </h2>
-          <p className="text-lg md:text-xl text-gray-600 mt-4 max-w-3xl mx-auto">
+          <p className="text-sm md:text-base text-gray-600 mt-4 max-w-2xl mx-auto font-medium">
             Every style tells a story. What's yours?
           </p>
         </div>
 
         {/* Interactive Category Grid */}
-        <div className="backdrop-blur-lg bg-white/20 rounded-3xl border border-white/20 shadow-2xl p-8">
+        <div className="rounded-3xl border border-gray-100 bg-white shadow-sm p-6 md:p-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 lg:gap-8">
             {categories.slice(0, 12).map((category, index) => (
               <Link
