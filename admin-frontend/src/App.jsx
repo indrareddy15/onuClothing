@@ -28,6 +28,7 @@ import AdminFAQPage from "./pages/admin-view/AdminFAQPage";
 import AdminCategoryBanners from "./pages/admin-view/AdminCategoryBanners";
 import AdminHomeCouponBanner from "./pages/admin-view/AdminHomeCouponBanner";
 import DisclaimerManager from "./components/admin-view/DisclaimerManager";
+import AdminVideoReviews from "./pages/admin-view/AdminVideoReviews";
 
 import { Toaster } from "@/components/ui/toaster";
 import CheckAuth from "./components/common/checkAuth";
@@ -99,6 +100,7 @@ function App() {
             element={<AdminHomeCouponBanner />}
           />
           <Route path="features/disclaimers" element={<DisclaimerManager />} />
+          <Route path="features/videoReviews" element={<AdminVideoReviews />} />
 
           <Route path="orders" element={<AdminOrders />} />
           <Route path="pages/about" element={<AdminAboutPage />} />

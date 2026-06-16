@@ -31,6 +31,7 @@ import {addCategoryBanners,
     sendContactQueryMail, sendMailToGetCoupon, setAboutData, setAddressField, setContactUsePageData, setCouponBannerData, setFAQWebsite, setPrivacyPolicyWebsite, setTermsAndConditionWebsite, setWebsiteDisclaimers, trackVisit, updateAddressFormFiledIndex, updateCategoryBannerIndex, updateColorName, updateFeaturesIndex, updateHeaderCarousal, updateIsActive } from '../../controller/commonControllers/common.controller.js';
 import { isAuthenticateuser } from '../../Middelwares/authuser.js';
 import ProtectAdminRoute from '../../Middelwares/adminProtectRoute.js';
+import { getActiveVideoReviews } from '../../controller/adminController/videoReview.controller.js';
 
 const route = express.Router();
 
@@ -104,5 +105,8 @@ route.post('/coupons/sendCoupon',sendMailToGetCoupon)
 route.get('/coupons/all',fetchCouponsByQuery);
 
 route.post('/stats/track-visit',trackVisit);
+
+// Public: active home-page video reviews
+route.get('/video-reviews', getActiveVideoReviews);
 
 export default route

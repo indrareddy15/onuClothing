@@ -2,10 +2,11 @@ import express from 'express';
 import { addCustomProductsRating, addNewProduct, createNewCoupon, deleteProduct, editCoupon, editProduct, fetchAllCoupons, fetchAllProducts, fetchAllReturnOrders, getallOrders, getOrderById, getProductById, getShipmtRocketTokenFromDb, removeCoupon, removeCustomProductsRating, updateOrderStatus, uploadImage, uploadMultipleImages } from '../../controller/adminController/admin.product.controller.js';
 import { addNewColorToSize, addNewSizeToProduct, adminRegisterOtpCheck, fetchAllCustomerUsers, getAllProducts, getCustomerGraphData, getMaxDeliveredOrders, getOrderDeliveredGraphData, getOrdersGraphData, getProductTotalStocks, getRecentOrders, getTopSellingProducts, getTotalOrders, getTotalUsers, getuser, getWebsiteVisitCount, logInUser, registerNewAdmin, removeColorFromSize, removeSizeFromProduct, removingCustomer, updateAdminData, updateColorSku, UpdateColorStock, updateImages, UpdateSizeStock } from '../../controller/adminController/admin.auth.controller.js';
 import ProtectAdminRoute from '../../Middelwares/adminProtectRoute.js';
-import { upload } from '../../utility/cloudinaryUtils.js';
+import { upload, uploadVideo } from '../../utility/cloudinaryUtils.js';
 import { isAuthenticateuser } from '../../Middelwares/authuser.js';
 import { GetWalletBalance } from '../../controller/LogisticsControllers/shiprocketLogisticController.js';
 import { createAndSendOrderManifest, createOrderCancel, retryRefundData, tryCreatePickupResponse } from '../../controller/ordercontroller.js';
+import { uploadVideoReview, getAllVideoReviews, updateVideoReview, reorderVideoReviews, deleteVideoReview } from '../../controller/adminController/videoReview.controller.js';
 
 const route = express.Router();
 route.post('/auth/register',registerNewAdmin)
@@ -91,5 +92,13 @@ route.get('/product/coupons/all',isAuthenticateuser,ProtectAdminRoute,fetchAllCo
 
 route.get('/customer/all',isAuthenticateuser,ProtectAdminRoute,fetchAllCustomerUsers);
 route.patch('/customer/del',isAuthenticateuser,ProtectAdminRoute,removingCustomer);
+
+
+// Video reviews (home page reels)
+route.post('/video-reviews/upload',isAuthenticateuser,ProtectAdminRoute,uploadVideo.single('video'),uploadVideoReview);
+route.get('/video-reviews/all',isAuthenticateuser,ProtectAdminRoute,getAllVideoReviews);
+route.patch('/video-reviews/reorder',isAuthenticateuser,ProtectAdminRoute,reorderVideoReviews);
+route.put('/video-reviews/:id',isAuthenticateuser,ProtectAdminRoute,updateVideoReview);
+route.delete('/video-reviews/:id',isAuthenticateuser,ProtectAdminRoute,deleteVideoReview);
 
 export default route;

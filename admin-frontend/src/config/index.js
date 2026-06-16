@@ -227,6 +227,12 @@ export const adminSideBarMenu = [
                 accessRole: ['superAdmin'],
                 path: 'features/disclaimers',
             },
+            {
+                id: 'videoReviews',
+                label: 'Home Video Reviews',
+                accessRole: ['admin', 'superAdmin'],
+                path: 'features/videoReviews',
+            },
         ]
     },
     {

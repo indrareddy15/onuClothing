@@ -12,6 +12,7 @@ import shopOrderSlice from './shop/order-slice';
 import searchSlice from './shop/search-slice';
 import commonSlice from './common-slice'
 import reviewProductSlice from './shop/review-slice';
+import videoReviewSlice from './admin/video-review-slice';
 
 
 const store = configureStore({
@@ -32,6 +33,7 @@ const store = configureStore({
         reviewProduct:reviewProductSlice,
 
         contactQuery:contactQuerySlice,
+        videoReviews:videoReviewSlice,
 	}
 })
 
