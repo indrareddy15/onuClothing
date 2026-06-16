@@ -2,6 +2,7 @@ import React, { createContext,  useContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { featchallbanners, fetchAllCategoryBanners } from '../action/banner.action';
 import { allProductsFilter, getOptionsByType } from '../action/productaction';
+import { fetchVideoReviews } from '../action/videoReview.action';
 
 // Create the context
 const ServerBannersContext = createContext();
@@ -12,6 +13,7 @@ export const SeverBannersProvider = ({ children }) => {
 	const { banners,loading:bannerLoading} = useSelector(state => state.banners)
 	const { categoryBanners,loading:CategoryBannerLoading} = useSelector(state => state.categoryBanners)
 	const { noFilterProducts,loading:productAllProductsLoading} = useSelector(state => state.AllProductNoFilter);
+	const { videoReviews,loading:videoReviewsLoading} = useSelector(state => state.videoReviews);
 	const [categoriesOptions,setCategoryOptions] = useState([]);
 	const getSingleOptions = async (type)=>{
 		try {
@@ -29,6 +31,7 @@ export const SeverBannersProvider = ({ children }) => {
 	useEffect(()=>{
 		dispatch(featchallbanners());
 		dispatch(fetchAllCategoryBanners());
+		dispatch(fetchVideoReviews());
 		handleFetchFilter();
 		getSingleOptions('category');
 	},[])
@@ -43,7 +46,9 @@ export const SeverBannersProvider = ({ children }) => {
 				getSingleOptions,
 				noFilterProducts,
 				productAllProductsLoading,
-				handleFetchFilter 
+				videoReviews,
+				videoReviewsLoading,
+				handleFetchFilter
 			}}>
 			{children}
 		</ServerBannersContext.Provider>

@@ -64,4 +64,54 @@ async function handleMultipleImageUpload(files) {
 
 const maxFileSize = process.env.MAX_FILE_SIZE ? parseInt(process.env.MAX_FILE_SIZE, 10) : 52428800;
 const upload = multer({ storage, limits: { fileSize: maxFileSize } });
-export { handleImageUpload, handleMultipleImageUpload, upload };
+
+/* -------------------------------------------------------------------------- */
+/*  Video uploads (short-form review reels)                                   */
+/* -------------------------------------------------------------------------- */
+
+// Upload a video directly from a Buffer (no base64 inflation). Requests eager
+// transformations so a poster (jpg) and a web-optimized MP4 are pre-generated
+// — the first viewer never pays transform latency.
+async function handleVideoUpload(buffer, folder = 'video-reviews') {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            {
+                resource_type: 'video',
+                folder,
+                eager: [
+                    { format: 'jpg', transformation: [{ width: 540, crop: 'scale' }] },
+                    { format: 'mp4', transformation: [{ quality: 'auto:eco', video_codec: 'auto', fetch_format: 'auto' }] },
+                ],
+                eager_async: false,
+                timeout: 180000,
+            },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+            }
+        );
+        stream.end(buffer);
+    });
+}
+
+// Remove a Cloudinary video asset (call before deleting the DB record).
+async function deleteVideoAsset(publicId) {
+    if (!publicId) return null;
+    return cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+}
+
+const ALLOWED_VIDEO_MIME = ['video/mp4', 'video/webm', 'video/quicktime'];
+const maxVideoSize = process.env.VIDEO_MAX_FILE_SIZE
+    ? parseInt(process.env.VIDEO_MAX_FILE_SIZE, 10)
+    : 80 * 1024 * 1024; // 80MB default — ample for a 15–30s reel
+
+const uploadVideo = multer({
+    storage,
+    limits: { fileSize: maxVideoSize },
+    fileFilter: (req, file, cb) => {
+        if (ALLOWED_VIDEO_MIME.includes(file.mimetype)) return cb(null, true);
+        cb(new Error('Unsupported file type. Allowed: MP4, WebM, MOV.'));
+    },
+});
+
+export { handleImageUpload, handleMultipleImageUpload, upload, handleVideoUpload, deleteVideoAsset, uploadVideo };

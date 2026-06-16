@@ -28,6 +28,7 @@ import CategoryExplorerSection from "./CategoryExplorerSection";
 import TrendingProductsLoader from "./TrendingProductsLoader";
 import TrackVisite from "../TrackVisite";
 import BentoGrid from "./BentoGrid";
+import VideoReviewsSection from "./VideoReviewsSection";
 import Marquee from "../ui/marquee";
 import { fetchWebsiteDisclaimer } from "../../action/common.action";
 import { useServerBanners } from "../../Contaxt/ServerBannerContext";
@@ -105,6 +106,9 @@ const Home = ({ user }) => {
           <CategoryExplorerSection categories={MobileScreen_CategorySlider.Url} />
         </div>
       )}
+
+      {/* Video Reviews (reel-style, between Recently Viewed and Collections) */}
+      <VideoReviewsSection />
 
       {/* 4. Bento Grid (Curated Collections) */}
       {WideScreen_Video?.Url?.length > 0 && (
