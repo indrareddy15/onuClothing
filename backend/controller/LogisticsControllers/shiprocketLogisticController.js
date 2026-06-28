@@ -734,10 +734,15 @@ export const generateRefundOrder = async (order) => {
         // Base64 encode the API key and secret for Basic Authentication
         const auth = Buffer.from(`${razorpayApiKey}:${razorpayApiSecret}`).toString('base64');
 
+        // Razorpay expects the refund amount in the smallest currency unit (paise),
+        // exactly like order creation (amount * 100). TotalAmount is stored in rupees,
+        // so it MUST be converted; sending rupees would refund 1/100th of the value.
+        const refundAmountPaise = Math.round(Number(TotalAmount) * 100);
+
         // Make the refund API call with the Basic Authentication header
         const response = await axios.post(
             `https://api.razorpay.com/v1/payments/${paymentId}/refund`,
-            { amount: TotalAmount },
+            { amount: refundAmountPaise },
             {
                 headers: {
                     Authorization: `Basic ${auth}`, // Add the Basic Authentication header

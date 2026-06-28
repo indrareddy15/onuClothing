@@ -59,7 +59,7 @@ route.get('/website/convenienceFees',getConvenienceFees)
 
 route.put('/website/contact-us',isAuthenticateuser,ProtectAdminRoute,setContactUsePageData)
 route.get('/website/contact-us',getContactUsPageData)
-route.post('/website/contact-us-query/mail',sendContactQueryMail)
+route.post('/website/contact-us-query/mail',isAuthenticateuser,ProtectAdminRoute,sendContactQueryMail)
 
 // t&c
 route.put('/website/terms-and-condition',isAuthenticateuser,ProtectAdminRoute,setTermsAndConditionWebsite)
@@ -75,7 +75,7 @@ route.patch('/website/faqs',isAuthenticateuser,ProtectAdminRoute,removeFAQById)
 route.get('/website/faqs',getFAQWebsite)
 
 route.post('/website/send-contact-query',createContactQuery)
-route.get('/website/get-contact-query',getContactQuery)
+route.get('/website/get-contact-query',isAuthenticateuser,ProtectAdminRoute,getContactQuery)
 route.put('/website/address',isAuthenticateuser,ProtectAdminRoute,setAddressField);
 route.patch('/website/address/remove',isAuthenticateuser,ProtectAdminRoute,removeAddressFormField);
 

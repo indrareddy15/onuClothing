@@ -478,3 +478,53 @@
     backdrop-filter: blur(8px);
   }
 }
+
+/* =========================================================
+   Hybrid homepage redesign (A + B-lite + C)
+   Presentation-only utilities: scroll reveal, accent token,
+   refined motion. All respect prefers-reduced-motion.
+   ========================================================= */
+
+:root {
+  /* Single restrained accent used only for "live/new" affordances */
+  --onu-accent: 160 84% 39%; /* emerald-600 */
+}
+
+/* Scroll-reveal: hidden initial state -> animate in when in view */
+.reveal-init {
+  opacity: 0;
+  transform: translateY(28px);
+  will-change: opacity, transform;
+}
+
+.reveal-in {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.7s cubic-bezier(0.19, 1, 0.22, 1),
+    transform 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* Soft pulsing "live" dot for trending/new badges */
+@keyframes onuLivePulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--onu-accent) / 0.5); }
+  50% { box-shadow: 0 0 0 5px hsl(var(--onu-accent) / 0); }
+}
+.onu-live-dot {
+  background-color: hsl(var(--onu-accent));
+  animation: onuLivePulse 2s ease-in-out infinite;
+}
+
+/* If the user prefers reduced motion: show everything instantly, no transforms */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-init {
+    opacity: 1;
+    transform: none;
+  }
+  .reveal-in {
+    transition: none;
+  }
+  .onu-live-dot {
+    animation: none;
+  }
+}

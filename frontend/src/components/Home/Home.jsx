@@ -30,6 +30,9 @@ import TrackVisite from "../TrackVisite";
 import BentoGrid from "./BentoGrid";
 import VideoReviewsSection from "./VideoReviewsSection";
 import Marquee from "../ui/marquee";
+import Reveal from "./Reveal";
+import SectionHeading from "./SectionHeading";
+import RecentlyViewedRail from "./RecentlyViewedRail";
 import { fetchWebsiteDisclaimer } from "../../action/common.action";
 import { useServerBanners } from "../../Contaxt/ServerBannerContext";
 
@@ -91,7 +94,7 @@ const Home = ({ user }) => {
         <Marquee className="[--duration:40s]" pauseOnHover>
           {[
             "PREMIUM QUALITY", "•", "SUSTAINABLE FASHION", "•", "GLOBAL SHIPPING", "•",
-            "NEW ARRIVALS", "•", "LIMITED EDITIONS", "•", "EXLCUSIVE DROPS", "•"
+            "NEW ARRIVALS", "•", "LIMITED EDITIONS", "•", "EXCLUSIVE DROPS", "•"
           ].map((text, i) => (
             <span key={i} className="mx-8 text-xs font-bold tracking-[0.2em] text-gray-400 uppercase">
               {text}
@@ -100,11 +103,11 @@ const Home = ({ user }) => {
         </Marquee>
       </div>
 
-      {/* 3. Mobile Category Explorer */}
+      {/* 3. Category Explorer (pulled up for conversion; now all breakpoints) */}
       {MobileScreen_CategorySlider?.Url?.length > 0 && (
-        <div className="md:hidden py-8 bg-gray-50">
+        <Reveal>
           <CategoryExplorerSection categories={MobileScreen_CategorySlider.Url} />
-        </div>
+        </Reveal>
       )}
 
       {/* Video Reviews (reel-style, between Recently Viewed and Collections) */}
@@ -139,55 +142,76 @@ const Home = ({ user }) => {
       {/* 5. Trending / New Arrivals (Horizontal Scroll) */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-[1600px] mx-auto px-4 md:px-8">
-          <div className="flex flex-col items-center text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black text-white text-[10px] font-bold uppercase tracking-widest mb-4">
-              <TrendingUp size={12} />
-              <span>Fresh Drops</span>
-            </div>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-gray-900 uppercase mb-4">
-              Trending Now
-            </h2>
-            <p className="text-gray-500 max-w-lg">
-              Discover the pieces that are defining the current season.
-            </p>
-          </div>
+          <Reveal>
+            <SectionHeading
+              eyebrow="Fresh Drops"
+              eyebrowIcon={<TrendingUp size={12} />}
+              live
+              title="Trending Now"
+              description="Discover the pieces that are defining the current season."
+              align="center"
+              action={{ to: "/products", label: "Shop All" }}
+            />
+          </Reveal>
 
           {productAllProductsLoading ? (
             <TrendingProductsLoader />
           ) : (
-            <div className="relative">
-              {/* Horizontal Scroll Container */}
+            <Reveal delay={80} className="relative">
               <div className="flex overflow-x-auto gap-6 pb-8 scrollbar-hide snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0">
                 {noFilterProducts && noFilterProducts.slice(0, 8).map((product, index) => (
-                  <div key={index} className="min-w-[280px] md:min-w-[320px] snap-center">
+                  <div key={index} className="min-w-[260px] md:min-w-[320px] snap-center">
                     <ModernProductCard product={product} />
                   </div>
                 ))}
               </div>
-            </div>
+            </Reveal>
           )}
         </div>
       </section>
 
-      {/* 6. Main Banner (Carousal) */}
+      {/* 5. Bento Grid (Curated Collections) */}
+      {WideScreen_Video?.Url?.length > 0 && (
+        <section className="py-16 md:py-24 px-4 md:px-8 max-w-[1600px] mx-auto">
+          <Reveal>
+            <SectionHeading
+              eyebrow="Collections"
+              title={WideScreen_Video.Header || "Curated For You"}
+              action={{ to: "/products", label: "View All Collections" }}
+            />
+          </Reveal>
+          <Reveal delay={80}>
+            <BentoGrid
+              items={WideScreen_Video.Url}
+              categoriesOptions={categoriesOptions}
+              loading={CategoryBannerLoading}
+            />
+          </Reveal>
+        </section>
+      )}
+
+      {/* 6. Recently Viewed (conversion — renders only when history exists) */}
+      <RecentlyViewedRail />
+
+      {/* 7. Main Banner (Carousal) */}
       {getBannerSection("Wide Screen Section- 1").urls.length > 0 && (
-        <section className="py-12 px-4 md:px-8 max-w-[1600px] mx-auto">
-          <div className="rounded-3xl overflow-hidden shadow-2xl">
+        <section className="py-12 md:py-16 px-4 md:px-8 max-w-[1600px] mx-auto">
+          <Reveal className="rounded-3xl overflow-hidden shadow-2xl">
             <CarousalView
               b_banners={getBannerSection("Wide Screen Section- 1").urls}
               bannerLoading={bannerLoading}
             />
-          </div>
+          </Reveal>
         </section>
       )}
 
-      {/* 7. Featured Collections (Draggable Sliders) */}
-      <div className="space-y-24 py-20">
+      {/* 8. Featured Collections (Draggable Sliders) */}
+      <div className="space-y-16 md:space-y-24 py-16 md:py-24">
         {sections.map((section, index) =>
           section.urls.length > 0 && (
-            <section key={index} className="px-4 md:px-8 max-w-[1600px] mx-auto">
+            <Reveal as="section" key={index} className="px-4 md:px-8 max-w-[1600px] mx-auto">
               <div className="flex items-center gap-4 mb-8">
-                <h3 className="text-2xl md:text-3xl font-bold uppercase tracking-tight">{section.header}</h3>
+                <h3 className="text-2xl md:text-3xl font-bold uppercase tracking-tight text-gray-900">{section.header}</h3>
                 <div className="h-[1px] flex-1 bg-gray-200"></div>
               </div>
               <DraggableImageSlider
@@ -195,27 +219,27 @@ const Home = ({ user }) => {
                 headers={section.header}
                 bannerLoading={bannerLoading}
               />
-            </section>
+            </Reveal>
           )
         )}
       </div>
 
-      {/* 8. Grid Banner Section */}
+      {/* 9. Grid Banner Section */}
       {!bannerLoading && gridSection.urls.length > 0 && (
-        <section className="py-20 bg-black text-white">
+        <section className="py-16 md:py-24 bg-black text-white">
           <div className="max-w-[1600px] mx-auto px-4 md:px-8">
             {gridSection.header && (
-              <div className="text-center mb-16">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest mb-4">
-                  <Star size={12} />
-                  <span>Spotlight</span>
-                </div>
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase">
-                  {gridSection.header}
-                </h2>
-              </div>
+              <Reveal>
+                <SectionHeading
+                  eyebrow="Spotlight"
+                  eyebrowIcon={<Star size={12} />}
+                  title={gridSection.header}
+                  align="center"
+                  tone="dark"
+                />
+              </Reveal>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Reveal delay={80} className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {gridSection.urls.map((url, index) => (
                 <Link
                   key={`grid_banner_${index}`}
@@ -236,12 +260,12 @@ const Home = ({ user }) => {
                   </div>
                 </Link>
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
       )}
 
-      {/* 9. Trust Badges (Redesigned) */}
+      {/* 10. Trust Badges (Redesigned) */}
       <OurMotoData />
 
 
@@ -273,9 +297,9 @@ const OurMotoData = () => {
   ];
 
   return (
-    <section className="py-20 border-t border-gray-100">
+    <section className="py-16 md:py-24 border-t border-gray-100">
       <div className="max-w-[1600px] mx-auto px-4 md:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+        <Reveal className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {(WebsiteDisclaimer && WebsiteDisclaimer.length > 0 ? WebsiteDisclaimer : defaultDisclaimers).map((item, index) => {
             const Icon = item.icon || Truck; // Fallback
             return (
@@ -300,7 +324,7 @@ const OurMotoData = () => {
               </div>
             );
           })}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
