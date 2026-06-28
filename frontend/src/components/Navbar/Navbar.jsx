@@ -67,11 +67,11 @@ const Navbar = () => {
       </div>
 
       {/* Desktop Navbar */}
-      <header className="hidden lg:block sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60">
-        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-50 w-full bg-transparent">
+        <div className="container mx-auto px-6 md:px-12 h-20 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <h1 className="text-3xl font-extrabold tracking-tighter text-gray-900 group-hover:text-gray-700 transition-colors">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tighter text-white drop-shadow-lg group-hover:text-white/80 transition-colors">
               ON U
             </h1>
           </Link>
@@ -82,18 +82,27 @@ const Navbar = () => {
               <div
                 key={link.name}
                 className="relative h-20 flex items-center"
-                onMouseEnter={() => link.hasSubmenu && handleMenuHover("products", true)}
-                onMouseLeave={() => link.hasSubmenu && handleMenuHover("products", false)}
+                onMouseEnter={() =>
+                  link.hasSubmenu && handleMenuHover("products", true)
+                }
+                onMouseLeave={() =>
+                  link.hasSubmenu && handleMenuHover("products", false)
+                }
               >
                 <Link
                   to={link.path}
-                  className={`text-sm font-medium tracking-wide transition-colors hover:text-black ${location.pathname === link.path ? "text-black" : "text-gray-700"
-                    }`}
+                  className={`text-sm font-bold uppercase tracking-widest transition-colors drop-shadow-md ${
+                    location.pathname === link.path
+                      ? "text-white"
+                      : "text-white/90 hover:text-white"
+                  }`}
                 >
                   {link.name}
                 </Link>
                 {link.hasSubmenu && (
-                  <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-2 transition-all duration-200 ${activeMenu === "products" ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+                  <div
+                    className={`absolute top-full left-1/2 -translate-x-1/2 pt-2 transition-all duration-200 ${activeMenu === "products" ? "opacity-100 visible" : "opacity-0 invisible"}`}
+                  >
                     {/* Submenu container handled by ProductCatView */}
                   </div>
                 )}
@@ -106,14 +115,24 @@ const Navbar = () => {
             {/* Search */}
             <div className="relative">
               {isSearchVisible ? (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-80 bg-white shadow-lg rounded-lg p-2 border">
-                  <SearchComponent toggleSearchBar={() => setIsSearchVisible(false)} />
-                  <button onClick={() => setIsSearchVisible(false)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full">
-                    <X className="w-4 h-4" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-80 bg-white shadow-2xl rounded-lg p-2 border border-gray-200 z-50">
+                  <SearchComponent
+                    toggleSearchBar={() => setIsSearchVisible(false)}
+                  />
+                  <button
+                    onClick={() => setIsSearchVisible(false)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
+                  >
+                    <X className="w-4 h-4 text-gray-700" />
                   </button>
                 </div>
               ) : (
-                <Button variant="ghost" size="icon" className="h-10 w-10 [&_svg]:size-6" onClick={() => setIsSearchVisible(true)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 [&_svg]:size-6 text-white drop-shadow-lg hover:bg-white/10 hover:text-white/80"
+                  onClick={() => setIsSearchVisible(true)}
+                >
                   <Search />
                 </Button>
               )}
@@ -121,10 +140,17 @@ const Navbar = () => {
 
             {/* Wishlist */}
             <Link to="/my_wishlist">
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 [&_svg]:size-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-10 w-10 [&_svg]:size-6 text-white drop-shadow-lg hover:bg-white/10 hover:text-white/80"
+              >
                 <Heart />
                 {currentWishListCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]">
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+                  >
                     {currentWishListCount}
                   </Badge>
                 )}
@@ -133,10 +159,17 @@ const Navbar = () => {
 
             {/* Bag */}
             <Link to="/bag">
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 [&_svg]:size-6">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-10 w-10 [&_svg]:size-6 text-white drop-shadow-lg hover:bg-white/10 hover:text-white/80"
+              >
                 <ShoppingBag />
                 {currentBagCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]">
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+                  >
                     {currentBagCount}
                   </Badge>
                 )}
@@ -150,7 +183,11 @@ const Navbar = () => {
               onMouseLeave={() => setShowProfileMenu(false)}
             >
               <Link to={user ? "/dashboard" : "/Login"}>
-                <Button variant="ghost" size="icon" className="h-10 w-10 [&_svg]:size-6">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 [&_svg]:size-6 text-white drop-shadow-lg hover:bg-white/10 hover:text-white/80"
+                >
                   <User />
                 </Button>
               </Link>

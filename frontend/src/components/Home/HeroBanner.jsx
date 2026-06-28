@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ArrowRight, Wind, Award, Sparkles } from "lucide-react";
+import { ArrowRight, Wind, Sparkles, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const HeroBanner = () => {
@@ -35,130 +35,140 @@ const HeroBanner = () => {
 
   return (
     <div className="relative w-full">
-      {/* Hero Section */}
-      <section className="relative w-full min-h-screen bg-gradient-to-b from-[#f5ede0] via-[#faf7f2] to-[#f8f5f0] overflow-hidden">
-        {/* Subtle decorative circles */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-white/40 rounded-full blur-3xl -translate-x-1/3 -translate-y-1/3 opacity-50" />
-        <div className="absolute bottom-20 right-0 w-72 h-72 bg-amber-100/20 rounded-full blur-3xl translate-x-1/4 opacity-40" />
-
-        <div className="container mx-auto px-6 md:px-12 py-16 md:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[600px]">
-            {/* Left Content */}
-            <div className="relative z-10">
-              {/* Collection Label */}
-              <div
-                className={`
-                  inline-block mb-8 text-xs font-bold uppercase tracking-[0.3em] text-neutral-600
-                  transition-all duration-700 transform
-                  ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"}
-                `}
-              >
-                Casual Wear Collection
-              </div>
-
-              {/* Main Headline */}
-              <h1
-                className={`
-                  text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] mb-6
-                  text-neutral-900 transition-all duration-700 delay-100 transform
-                  ${isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}
-                `}
-              >
-                Effortless Style.
-                <br />
-                Everyday You.
-              </h1>
-
-              {/* Divider */}
-              <div
-                className={`
-                  w-16 h-1 bg-neutral-900 mb-8
-                  transition-all duration-700 delay-200 transform
-                  ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}
-                `}
+      {/* Full Screen Hero with Image Background */}
+      <section className="relative w-full h-screen min-h-screen flex items-center justify-center overflow-hidden pt-16 lg:pt-0">
+        {/* Background Images - Full Screen */}
+        <div className="absolute inset-0">
+          {featuredImages.map((image, index) => (
+            <div
+              key={image.src}
+              className={`
+                absolute inset-0 transition-opacity duration-1000
+                ${index === activeImageIndex ? "opacity-100" : "opacity-0"}
+              `}
+            >
+              <img
+                src={image.src}
+                alt={image.alt}
+                className="h-full w-full object-cover"
               />
+              {/* Dark Overlay for Text Readability */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/50" />
+            </div>
+          ))}
+        </div>
 
-              {/* Description */}
-              <p
-                className={`
-                  text-lg text-neutral-700 font-light leading-relaxed mb-10 max-w-md
-                  transition-all duration-700 delay-300 transform
-                  ${isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}
-                `}
-              >
-                Timeless designs. Premium comfort.
-                <br />
-                Made for every moment.
-              </p>
-
-              {/* CTA Button */}
-              <div
-                className={`
-                  transition-all duration-700 delay-500 transform
-                  ${isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}
-                `}
-              >
-                <button
-                  onClick={handleShopNow}
-                  className="group inline-block px-8 py-4 bg-neutral-900 text-white font-bold uppercase tracking-widest text-sm hover:bg-neutral-800 transition-all duration-300"
-                >
-                  Shop Now
-                </button>
-              </div>
+        {/* Content Overlay */}
+        <div className="container mx-auto px-6 md:px-12 relative z-10 flex items-center justify-center min-h-screen">
+          <div className="max-w-2xl mx-auto text-center lg:text-left">
+            {/* Collection Label */}
+            <div
+              className={`
+                inline-block mb-8 text-xs font-bold uppercase tracking-[0.3em] text-white/80
+                transition-all duration-700 transform
+                ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-4 opacity-0"}
+              `}
+            >
+              Casual Wear Collection
             </div>
 
-            {/* Right Image - Rotating Featured Images */}
-            <div className="relative h-[500px] md:h-[700px] hidden lg:block">
-              {featuredImages.map((image, index) => (
-                <div
-                  key={image.src}
-                  className={`
-                    absolute inset-0 transition-opacity duration-1000
-                    ${index === activeImageIndex ? "opacity-100" : "opacity-0"}
-                  `}
-                >
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ))}
+            {/* Main Headline */}
+            <h1
+              className={`
+                text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight mb-6
+                text-white transition-all duration-700 delay-100 transform
+                ${isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}
+              `}
+            >
+              Effortless Style.
+              <br />
+              Everyday You.
+            </h1>
+
+            {/* Divider */}
+            <div
+              className={`
+                w-16 h-1 bg-white mb-8 mx-auto lg:mx-0
+                transition-all duration-700 delay-200 transform
+                ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}
+              `}
+            />
+
+            {/* Description */}
+            <p
+              className={`
+                text-base sm:text-lg md:text-xl text-white/90 font-light leading-relaxed mb-10
+                transition-all duration-700 delay-300 transform
+                ${isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}
+              `}
+            >
+              Timeless designs. Premium comfort.
+              <br />
+              Made for every moment.
+            </p>
+
+            {/* CTA Button */}
+            <div
+              className={`
+                flex flex-col sm:flex-row gap-4
+                transition-all duration-700 delay-500 transform
+                ${isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}
+              `}
+            >
+              <button
+                onClick={handleShopNow}
+                className="group inline-block px-8 py-4 bg-white text-black font-bold uppercase tracking-widest text-sm hover:bg-white/90 transition-all duration-300 hover:scale-105"
+              >
+                Shop Now
+              </button>
+              <button
+                onClick={() => navigate("/about")}
+                className="group inline-block px-8 py-4 border-2 border-white text-white font-bold uppercase tracking-widest text-sm hover:bg-white/10 transition-all duration-300 hover:scale-105"
+              >
+                Learn More
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Features Section at Bottom */}
-        <div className="relative z-10 border-t border-neutral-300/30 bg-white/50 backdrop-blur-sm">
-          <div className="container mx-auto px-6 md:px-12 py-16">
-            <div className="grid grid-cols-3 gap-8 md:gap-12">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <div
-                    key={index}
-                    className={`
-                      flex flex-col items-center text-center
-                      transition-all duration-700 transform
-                      ${
-                        isVisible
-                          ? "translate-y-0 opacity-100"
-                          : "translate-y-8 opacity-0"
-                      }
-                    `}
-                    style={{ transitionDelay: `${700 + index * 100}ms` }}
-                  >
-                    <Icon className="w-6 h-6 md:w-8 md:h-8 text-neutral-700 mb-3" />
-                    <span className="text-[11px] md:text-xs font-bold uppercase tracking-wider text-neutral-600 whitespace-pre-line leading-tight">
-                      {feature.value}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
+          <div className="animate-bounce text-white/50 text-sm uppercase tracking-widest font-bold">
+            Scroll to explore
           </div>
         </div>
       </section>
+
+      {/* Features Section at Bottom */}
+      <div className="relative z-10 bg-white/50 backdrop-blur-sm border-t border-neutral-300/30">
+        <div className="container mx-auto px-6 md:px-12 py-16">
+          <div className="grid grid-cols-3 gap-6 md:gap-12">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={index}
+                  className={`
+                    flex flex-col items-center text-center
+                    transition-all duration-700 transform
+                    ${
+                      isVisible
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-8 opacity-0"
+                    }
+                  `}
+                  style={{ transitionDelay: `${700 + index * 100}ms` }}
+                >
+                  <Icon className="w-6 h-6 md:w-8 md:h-8 text-neutral-900 mb-3" />
+                  <span className="text-[11px] md:text-xs font-bold uppercase tracking-wider text-neutral-700 whitespace-pre-line leading-tight">
+                    {feature.value}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

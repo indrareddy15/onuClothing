@@ -113,32 +113,6 @@ const Home = ({ user }) => {
       {/* Video Reviews (reel-style, between Recently Viewed and Collections) */}
       <VideoReviewsSection />
 
-      {/* 4. Bento Grid (Curated Collections) */}
-      {WideScreen_Video?.Url?.length > 0 && (
-        <section className="py-20 px-4 md:px-8 max-w-[1600px] mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-8 h-[1px] bg-black"></span>
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Collections</span>
-              </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900 uppercase">
-                {WideScreen_Video.Header || "Curated For You"}
-              </h2>
-            </div>
-            <Link to="/products" className="group flex items-center gap-2 text-sm font-bold uppercase tracking-wider border-b border-black pb-1 hover:text-gray-600 hover:border-gray-600 transition-all">
-              View All Collections <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <BentoGrid
-            items={WideScreen_Video.Url}
-            categoriesOptions={categoriesOptions}
-            loading={CategoryBannerLoading}
-          />
-        </section>
-      )}
-
       {/* 5. Trending / New Arrivals (Horizontal Scroll) */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-[1600px] mx-auto px-4 md:px-8">
