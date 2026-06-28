@@ -8,9 +8,9 @@ const ModernHero = () => {
   const navigate = useNavigate();
 
   const featuredImages = [
-    { src: "/Hero_01.png", alt: "Featured style look one" },
-    { src: "/Hero_02.png", alt: "Featured style look two" },
-    { src: "/Hero_03.png", alt: "Featured style look three" },
+    { src: "/Hero_01.png", alt: "Featured style look one", position: "center 20%" },
+    { src: "/Hero_02.png", alt: "Featured style look two", position: "center 15%" },
+    { src: "/Hero_03.png", alt: "Featured style look three", position: "center 20%" },
   ];
 
   const features = [
@@ -31,9 +31,9 @@ const ModernHero = () => {
 
   return (
     <div className="relative w-full">
-      {/* Full Screen Hero with Image Background */}
-      <section className="relative w-full h-screen min-h-screen flex items-center justify-center overflow-hidden pt-16 lg:pt-0">
-        {/* Background Images - Full Screen */}
+      {/* Optimized Hero Section with Responsive Height */}
+      <section className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] lg:h-[85vh] min-h-[480px] sm:min-h-[580px] md:min-h-[640px] lg:min-h-[700px] flex items-center justify-center overflow-hidden pt-16 lg:pt-20">
+        {/* Background Images - Full Screen Overlay */}
         <div className="absolute inset-0">
           {featuredImages.map((image, index) => (
             <div
@@ -47,15 +47,17 @@ const ModernHero = () => {
                 src={image.src}
                 alt={image.alt}
                 className="h-full w-full object-cover"
+                style={{ objectPosition: image.position || "center" }}
               />
-              {/* Dark Overlay for Text Readability */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/50" />
+              {/* Dark Overlays for Text Readability and Header Contrast */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/50" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/30" />
             </div>
           ))}
         </div>
 
         {/* Content Overlay */}
-        <div className="container mx-auto px-6 md:px-12 relative z-10 flex items-center justify-center min-h-screen">
+        <div className="container mx-auto px-6 md:px-12 relative z-10 flex items-center justify-center h-full">
           <div className="max-w-2xl mx-auto text-center lg:text-left">
             {/* Collection Label */}
             <div
