@@ -2,7 +2,7 @@ import express from 'express';
 import bodyparser from 'body-parser';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import https from 'https';
+
 import adminRoute from './routes/adminRoutes/admin.route.js';
 import commonRoute from './routes/common.Routes/common.routes.js';
 import User from './routes/userroutes.js';
@@ -13,81 +13,113 @@ import razorPayRoute from './routes/razorPayPayment.route.js';
 import shipRocketHookRoute from './routes/logisticRoutes.js';
 import errorMiddleware from './Middelwares/error.js';
 
-// Fix for TLS certificate issues with Cloudinary uploads
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // Only for development - use proper certificates in production
+// Fix for TLS certificate issues (Only for development)
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const app = express();
 
 app.use(express.json({ limit: process.env.MAX_JSON_LIMIT || '100mb' }));
 app.use(cookieParser());
-app.use(bodyparser.urlencoded({ limit: process.env.MAX_URLENCODED_LIMIT || '100mb', extended: true }));
+app.use(
+    bodyparser.urlencoded({
+        limit: process.env.MAX_URLENCODED_LIMIT || '100mb',
+        extended: true,
+    })
+);
 
-// Allowed origins (ensure these are correct)
 const allowedOrigins = [
-    process.env.API_URL,        // e.g. https://api.theonu.in
-    process.env.CLIENT_URL,     // e.g. https://theonu.in
-    process.env.CLIENT_URL_ADMIN, // e.g. https://admin.theonu.in
-];
+    process.env.API_URL,
+    ...(process.env.CLIENT_URL || '')
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean),
+    process.env.CLIENT_URL_ADMIN,
+].filter(Boolean);
 
-// Debug CORS origins in development
-if (process.env.NODE_ENV === 'development') {
-    console.log('🌐 CORS Allowed Origins:', allowedOrigins);
-}
+console.log('====================================');
+console.log('🌐 Allowed Origins');
+console.log(allowedOrigins);
+console.log('====================================');
+
+/**
+ * ==========================================
+ * CORS Configuration
+ * ==========================================
+ */
 
 app.use(
     cors({
         origin: (origin, callback) => {
-            console.log('🔍 CORS Request Origin:', origin); // Debug log
+            console.log('🔍 Request Origin:', origin);
 
-            // Allow requests with no origin (like mobile apps or Postman)
-            if (!origin) return callback(null, true);
+            // Allow Postman, Mobile Apps, Server-to-Server requests
+            if (!origin) {
+                return callback(null, true);
+            }
 
             if (allowedOrigins.includes(origin)) {
                 console.log('✅ CORS Allowed:', origin);
-                callback(null, true);
-            } else {
-                console.log('❌ CORS Blocked:', origin);
-                console.log('📝 Allowed origins:', allowedOrigins);
-                callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
+                return callback(null, true);
             }
+
+            console.log('❌ CORS Blocked:', origin);
+            console.log('📋 Allowed Origins:', allowedOrigins);
+
+            return callback(new Error(`Origin ${origin} is not allowed by CORS`));
         },
+
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+
+        credentials: true,
+
         allowedHeaders: [
+            'Origin',
             'Content-Type',
+            'Accept',
             'Authorization',
             'Cache-Control',
-            'Expires',
             'Pragma',
+            'Expires',
+            'X-Requested-With',
             'x-forwarded-for',
-            'Accept',
-            'Origin',
-            'X-Requested-With'
         ],
-        credentials: true, // Allow credentials like cookies
     })
 );
 
-// Handling OPTIONS requests for preflight CORS
+// Handle Preflight Requests
 app.options('*', cors());
 
-// Add payload limit error handler with CORS headers
+/**
+ * Payload Too Large Handler
+ */
+
 app.use((err, req, res, next) => {
     if (err.status === 413 || err.message?.includes('payload')) {
         return res.status(413).json({
             Success: false,
-            message: 'Payload too large. Maximum file size is 50MB per file or 100MB total.'
+            message:
+                'Payload too large. Maximum file size is 50MB per file or 100MB total.',
         });
     }
+
     next(err);
 });
 
+/**
+ * Root Route
+ */
 
-// Define the / route to send a JSON response
 app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to the On U API. The server is running!' });
+    res.json({
+        success: true,
+        message: 'Welcome to the On U API. Server is running successfully.',
+    });
 });
 
-// Define the other routes
+/**
+ * Routes
+ */
+
 app.use('/admin', adminRoute);
 app.use('/api/common', commonRoute);
 app.use('/api/auth', User);
@@ -97,7 +129,10 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/payment/razorpay', razorPayRoute);
 app.use('/api/logistic', shipRocketHookRoute);
 
-// Error handling middleware (must be registered last)
+/**
+ * Global Error Handler
+ */
+
 app.use(errorMiddleware);
 
 export default app;
