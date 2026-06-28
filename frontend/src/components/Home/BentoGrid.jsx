@@ -40,7 +40,7 @@ const VideoGridItem = ({ url, categoriesOptions }) => {
 const BentoGrid = ({ items, categoriesOptions, loading }) => {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 auto-rows-[200px] md:auto-rows-[300px]">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[160px] sm:auto-rows-[200px] md:auto-rows-[300px]">
         {Array(6)
           .fill(0)
           .map((_, i) => (
@@ -59,7 +59,7 @@ const BentoGrid = ({ items, categoriesOptions, loading }) => {
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[200px] md:auto-rows-[300px] gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[160px] sm:auto-rows-[200px] md:auto-rows-[300px] gap-4 md:gap-6">
       {items.slice(0, 7).map((item, i) => {
         // Bento Grid Pattern
         // 0: Big Square (2x2)

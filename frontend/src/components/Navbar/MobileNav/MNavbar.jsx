@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import {
   Menu,
@@ -33,6 +33,28 @@ const MNavbar = () => {
   const { wishlist, bag } = useServerWishList();
   const dispatch = useDispatch();
   const navigation = useNavigate();
+  const location = useLocation();
+
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isHomepage = location.pathname === "/";
+  const headerBgClass = isHomepage
+    ? isScrolled
+      ? "bg-black/85 backdrop-blur-md border-b border-white/5 shadow-md transition-all duration-300"
+      : "bg-transparent transition-all duration-300"
+    : "bg-black/95 backdrop-blur-md border-b border-white/10 shadow-lg transition-all duration-300";
 
   const [showMenuView, setMenuShow] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -82,7 +104,7 @@ const MNavbar = () => {
   return (
     <Fragment>
       {/* Mobile Header */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-transparent h-16 flex items-center justify-between px-4 lg:hidden">
+      <div className={`fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-between px-4 lg:hidden ${headerBgClass}`}>
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"

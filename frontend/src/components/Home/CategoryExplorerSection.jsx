@@ -27,7 +27,7 @@ const CategoryExplorerSection = ({ categories }) => {
 
         {/* Interactive Category Grid */}
         <div className="rounded-3xl border border-gray-100 bg-white shadow-sm p-6 md:p-8">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 lg:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 lg:gap-8">
             {categories.slice(0, 12).map((category, index) => (
               <Link
                 key={index}

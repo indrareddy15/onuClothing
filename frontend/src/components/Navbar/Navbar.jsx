@@ -27,11 +27,31 @@ const Navbar = () => {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Fetch options on mount
   useEffect(() => {
     dispatch(fetchAllOptions());
   }, [dispatch]);
+
+  const isHomepage = location.pathname === "/";
+  const headerBgClass = isHomepage
+    ? isScrolled
+      ? "bg-black/80 backdrop-blur-md border-b border-white/5 shadow-md transition-all duration-300"
+      : "bg-transparent transition-all duration-300"
+    : "bg-black/95 backdrop-blur-md border-b border-white/10 shadow-lg transition-all duration-300";
 
   // Update counts
   useEffect(() => {
@@ -67,7 +87,7 @@ const Navbar = () => {
       </div>
 
       {/* Desktop Navbar */}
-      <header className="hidden lg:block fixed top-0 left-0 right-0 z-50 w-full bg-transparent">
+      <header className={`hidden lg:block fixed top-0 left-0 right-0 z-50 w-full ${headerBgClass}`}>
         <div className="container mx-auto px-6 md:px-12 h-20 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
